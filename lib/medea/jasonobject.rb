@@ -102,18 +102,20 @@ module Medea
         }
         post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
 
-        puts "Posted to JasonDB!"
-=begin
-        response = RestClient.post db_auth_url, payload, post_headers
+        #puts "Posted to JasonDB!"
+        url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
+        puts "Saving to #{url}"
+        response = RestClient.post url, payload, post_headers
 
         if response.code == 201
             #save successful!
             #store the new eTag for this object
+            puts response.raw_headers
             @__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
         else
             raise "POST failed! Could not save object"
         end
-=end
+
         @__jason_state = :stale
     end
 
