@@ -22,3 +22,9 @@ puts "state: #{mikey.jason_state}"
 puts mikey.to_json
 mikey.save!
 puts "state: #{mikey.jason_state}"
+
+puts "Enter a Person key to retrieve: "
+id = gets.strip
+
+person = Person.new id
+puts person.to_json

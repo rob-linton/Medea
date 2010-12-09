@@ -13,13 +13,13 @@ module Medea
     #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
     #if mode is set to :eager, we create the JasonDeferredQuery, invoke it's execution and then return it
     def JasonObject.all(mode=:lazy)
-
+      #TODO Implement after JasonDeferredQuery is
     end
 
     #returns the JasonObject for this class with HTTP_X_KEY=key
     #if mode is :lazy, we return a GHOST, if mode is :eager, we return a STALE JasonObject
     def JasonObject.get_by_key(key, mode=:lazy)
-
+      return self.new key
     end
 
     #here we will capture:
@@ -66,14 +66,19 @@ module Medea
     end
     #end "flexihash" access
 
-    def initialize
-      @__jason_state = :new
-      @__jason_data = {}
+    def initialize key = nil
+      if key
+        @__id = key
+        load
+      else
+        @__jason_state = :new
+        @__jason_data = {}
+      end
     end
 
     def jason_key
         #TODO: Replace this string with a guid generator of some kind
-        @__id ||= "123456789-123456789"
+        @__id ||= "p#{Time.now.nsec.to_s}"
     end
 
     def jason_state
@@ -111,7 +116,7 @@ module Medea
             #save successful!
             #store the new eTag for this object
             puts response.raw_headers
-            @__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
+            #@__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
         else
             raise "POST failed! Could not save object"
         end
@@ -120,7 +125,9 @@ module Medea
     end
 
     def delete!
-
+      url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
+      response = RestClient.delete url
+      raise "DELETE failed!" unless response.code == 201
     end
 
     #end object persistence
@@ -134,10 +141,19 @@ module Medea
 
     #fetches the data from the JasonDB
     def load
-      puts "Getting data from JasonDB!"
+      url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
+      puts "Retrieving #{self.class.name} at #{url}"
+      response = RestClient.get url
+      @__jason_data = JSON.parse response
+      @__jason_etag = response.headers[:etag]
       @__jason_state = :stale
     end
 
+    def lazy_load meta
+      #TODO Implement lazy load
+      
+      @__jason_state = :ghost
+    end
 
   end
 end
