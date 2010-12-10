@@ -1,11 +1,37 @@
 $: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
 require 'medea'
 
-puts "JDQ on Persons"
-jdq = Medea::JasonDeferredQuery.new "Person"
-Person.find_by_name("Michael").find_by_age("21")
-puts jdq.to_url
+class Person < Medea::JasonObject
+end
 
-puts "---------", "Filtering by name = \"Michael\""
-jdq.find_by_name("Michael")
-puts jdq.to_url
+class Company < Medea::JasonObject
+end
+
+puts "Lets make a person!"
+p = Person.new
+puts "Name?"
+p.name = gets.strip
+puts "Age?"
+p.age = gets.strip.to_i
+puts "OK - Saving"
+p.save!
+
+puts "", "Lets make a company!"
+c = Company.new
+puts "Name?"
+c.name = gets.strip
+puts "Address?"
+c.address = gets.strip
+puts "OK - Saving"
+c.save!
+
+puts "", "Making #{p.name} a member of #{c.name}"
+p.make_member_of(c)
+puts "OK - Saving"
+
+puts "", "Now querying for Persons that are members of #{c.name}"
+r = Person.members_of(c)
+puts "Got:"
+r.each do |p|
+  puts p.name
+end

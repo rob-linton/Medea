@@ -13,27 +13,27 @@ module Medea
     #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
     #if mode is set to :eager, we create the JasonDeferredQuery, invoke it's execution and then return it
     def JasonObject.all(mode=:lazy)
-      #TODO Implement after JasonDeferredQuery is
+      JasonDeferredQuery.new self
     end
 
     #returns the JasonObject by directly querying the URL
     #if mode is :lazy, we return a GHOST, if mode is :eager, we return a STALE JasonObject
     def JasonObject.get_by_key(key, mode=:eager)
-      return self.new key
+      return self.new key, mode
     end
 
     #here we will capture:
-    #members_of_<class>(key)
     #members_of(object) (where object is an instance of a class that this class can be a member of)
     #find_by_<property>(value)
     #Will return a JasonDeferredQuery for this class with the appropriate data filter set
     def JasonObject.method_missing(name, *args, &block)
+      q = JasonDeferredQuery.new self
       if name =~ /^members_of$/
         #use the type and key of the first arg (being a JasonObject)
-      elsif name =~ /^members_of_(.*)$/
-        #use the class name from the name variable, and the key from the first arg (being a string)
+        return q.members_of args[0]
       elsif name =~ /^find_by_(.*)$/
         #use the property name from the name variable, and the value from the first arg
+        return q.add_data_filter $1, args[0]
       else
         #no method!
         super
@@ -41,13 +41,21 @@ module Medea
     end
     #end query interface
 
+    def make_member_of obj
+      raise ArgumentError, "You can only set membership between JasonObjects!" unless obj.is_a? JasonObject
+      @__jason_data["__member_of"] ||= []
+      @__jason_data["__member_of"] << obj.jason_key
+      @__jason_state = :dirty
+    end
+
     #"flexihash" access interface
     def []=(key, value)
-        @__jason_data[key] = value
+      @__jason_data ||= {}
+      @__jason_data[key] = value
     end
 
     def [](key)
-        @__jason_data ||= {}
+      @__jason_data[key]
     end
 
     #The "Magic" component of candy (https://github.com/SFEley/candy), repurposed to make this a
@@ -57,19 +65,23 @@ module Medea
         self.load if @__jason_state == :ghost
         if name =~ /(.*)=$/  # We're assigning
             @__jason_state = :dirty if @__jason_state == :stale
-            self[$1.to_sym] = args[0]
+            self[$1] = args[0]
         elsif name =~ /(.*)\?$/  # We're asking
-            (self[$1.to_sym] ? true : false)
+            (self[$1] ? true : false)
         else
             self[name]
         end
     end
     #end "flexihash" access
 
-    def initialize key = nil
+    def initialize key = nil, mode = :eager
       if key
         @__id = key
-        load
+        if mode == :eager
+          load
+        else
+          @__jason_state = :ghost
+        end
       else
         @__jason_state = :new
         @__jason_data = {}
@@ -109,13 +121,13 @@ module Medea
 
         #puts "Posted to JasonDB!"
         url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
-        puts "Saving to #{url}"
+        #puts "Saving to #{url}"
         response = RestClient.post url, payload, post_headers
 
         if response.code == 201
             #save successful!
             #store the new eTag for this object
-            puts response.raw_headers
+            #puts response.raw_headers
             #@__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
         else
             raise "POST failed! Could not save object"
@@ -142,7 +154,7 @@ module Medea
     #fetches the data from the JasonDB
     def load
       url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
-      puts "Retrieving #{self.class.name} at #{url}"
+      #puts "Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]

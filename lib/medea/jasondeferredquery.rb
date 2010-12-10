@@ -1,9 +1,14 @@
 module Medea
   class JasonDeferredQuery
-    def initialize class_name, format=:json
-      @filters = {:FILTER => {:HTTP_X_CLASS => class_name}}
+    require 'rest_client'
+
+    def initialize a_class, format=:json
+      @class = a_class
+      @filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s}}
       @format = format
       @time_limit = 0
+      @_state = :prefetch
+      @contents = []
     end
 
     #Here we're going to put the "query" interface
@@ -14,22 +19,37 @@ module Medea
     #find_by_<property>(value)
     #Will return a JasonDeferredQuery for this class with the appropriate data filter set
     def method_missing(name, *args, &block)
-      @filters[:DATA_FILTER] = {} unless @filters[:DATA_FILTER]
+      #if we are postfetch, we throw away all our cached results
+      if @_state == :postfetch
+        @_state = :prefetch
+        @contents = []
+      end
+
       if name =~ /^members_of$/
         #use the type and key of the first arg (being a JasonObject)
         #args[0] must be a JasonObject (or child)
         raise ArgumentError, "When looking for members, you must pass a JasonObject" unless args[0].is_a? JasonObject
-        @filters[:DATA_FILTER]["__member_of"] = [] unless @filters[:DATA_FILTER]["__member_of"]
+
+        @filters[:DATA_FILTER] ||= {}
+        @filters[:DATA_FILTER]["__member_of"] ||= []
         @filters[:DATA_FILTER]["__member_of"] << args[0].jason_key
       elsif name =~ /^find_by_(.*)$/
         #use the property name from the name variable, and the value from the first arg
-        @filters[:DATA_FILTER][$1] = args[0].to_s
+        add_data_filter $1, args[0].to_s
       else
         #no method!
         super
+        return
       end
+      #return self, so that we can chain up query refinements
+      self
     end
     #end query interface
+
+    def add_data_filter property, value
+      @filters[:DATA_FILTER] ||= {}
+      @filters[:DATA_FILTER][property] = value
+    end
 
     def to_url
       url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@format}?"
@@ -57,6 +77,42 @@ module Medea
       end
 
       url + filter_array.join("&")
+    end
+
+    #array access interface
+    def [](index)
+      execute_query unless @_state == :postfetch
+      @contents[index]
+    end
+
+    def each(&block)
+      @contents.each do |i|
+        yield i
+      end
+    end
+    #end array interface
+
+    private
+    def execute_query
+      #hit the URL
+      #fill @contents with :ghost versions of JasonObjects
+      begin
+        result = JSON.parse(RestClient.get to_url)
+
+        #results are in a hash, their keys are just numbers
+        result.keys.each do |k|
+          if k =~ /^[0-9]+$/
+            #this is a result! get the key
+            /\/([^\/]*)\/(.*)$/.match result[k]["POST_TO"]
+            #$1 is the class name, $2 is the key
+            @contents << @class.new($2, :lazy)
+          end
+        end
+      rescue
+        @contents = []
+      ensure
+        @_state = :postfetch
+      end
     end
   end
 end
