@@ -16,9 +16,9 @@ module Medea
       #TODO Implement after JasonDeferredQuery is
     end
 
-    #returns the JasonObject for this class with HTTP_X_KEY=key
+    #returns the JasonObject by directly querying the URL
     #if mode is :lazy, we return a GHOST, if mode is :eager, we return a STALE JasonObject
-    def JasonObject.get_by_key(key, mode=:lazy)
+    def JasonObject.get_by_key(key, mode=:eager)
       return self.new key
     end
 
