@@ -28,10 +28,12 @@ c.save!
 puts "", "Making #{p.name} a member of #{c.name}"
 p.make_member_of(c)
 puts "OK - Saving"
+p.save!
 
 puts "", "Now querying for Persons that are members of #{c.name}"
 r = Person.members_of(c)
-puts "Got:"
+puts "Query: #{r.to_url}"
+puts "Got #{r.count} items:"
 r.each do |p|
   puts p.name
 end

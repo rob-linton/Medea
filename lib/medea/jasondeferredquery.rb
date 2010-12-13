@@ -86,9 +86,13 @@ module Medea
     end
 
     def each(&block)
-      @contents.each do |i|
-        yield i
-      end
+      execute_query unless @_state == :postfetch
+      @contents.each &block
+    end
+
+    def count
+      execute_query unless @_state == :postfetch
+      @contents.count
     end
     #end array interface
 
@@ -103,7 +107,7 @@ module Medea
         result.keys.each do |k|
           if k =~ /^[0-9]+$/
             #this is a result! get the key
-            /\/([^\/]*)\/(.*)$/.match result[k]["POST_TO"]
+            /\/([^\/]*)\/([^\/]*)$/.match result[k]["POST_TO"]
             #$1 is the class name, $2 is the key
             @contents << @class.new($2, :lazy)
           end

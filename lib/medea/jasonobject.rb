@@ -43,8 +43,11 @@ module Medea
 
     def make_member_of obj
       raise ArgumentError, "You can only set membership between JasonObjects!" unless obj.is_a? JasonObject
-      @__jason_data["__member_of"] ||= []
-      @__jason_data["__member_of"] << obj.jason_key
+      #@__jason_data["__member_of"] ||= []
+      #@__jason_data["__member_of"] << obj.jason_key
+
+      #for now, we can only be member of one thing.
+      @__jason_data["__member_of"] = obj.jason_key
       @__jason_state = :dirty
     end
 
@@ -62,14 +65,14 @@ module Medea
     # "weak object" that can take any attribute.
     # Assigning any attribute will add it to the object's hash (and then be POSTed to JasonDB on the next save)
     def method_missing(name, *args, &block)
-        self.load if @__jason_state == :ghost
+        load if @__jason_state == :ghost
         if name =~ /(.*)=$/  # We're assigning
             @__jason_state = :dirty if @__jason_state == :stale
             self[$1] = args[0]
         elsif name =~ /(.*)\?$/  # We're asking
             (self[$1] ? true : false)
         else
-            self[name]
+            self[name.to_s]
         end
     end
     #end "flexihash" access
@@ -154,7 +157,7 @@ module Medea
     #fetches the data from the JasonDB
     def load
       url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
-      #puts "Retrieving #{self.class.name} at #{url}"
+      puts "Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]
