@@ -5,7 +5,7 @@ begin
   Jeweler::Tasks.new do |s|
     s.name = "medea"
     s.summary = "Simple wrapper for persisting objects to JasonDB"
-    s.email = "michaelj@logicaltech.com.au"
+    s.email = "michaelj@jasondb.com"
     s.homepage = "https://github.com/rob-linton/Medea"
     s.description = "Simple wrapper for persisting objects to JasonDB"
     s.authors = ["Michael Jensen"]
