@@ -2,10 +2,12 @@ module Medea
   class JasonDeferredQuery
     require 'rest_client'
 
+    attr_accessor :time_limit, :result_format
+
     def initialize a_class, format=:json
       @class = a_class
       @filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s}}
-      @format = format
+      @result_format = format
       @time_limit = 0
       @_state = :prefetch
       @contents = []
@@ -52,7 +54,7 @@ module Medea
     end
 
     def to_url
-      url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@format}?"
+      url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@result_format}?"
       filter_array = []
       @filters.each do |name, val|
         if not val
@@ -101,6 +103,7 @@ module Medea
       #hit the URL
       #fill @contents with :ghost versions of JasonObjects
       begin
+        puts "Executing deferred query! (#{to_url})"
         result = JSON.parse(RestClient.get to_url)
 
         #results are in a hash, their keys are just numbers
