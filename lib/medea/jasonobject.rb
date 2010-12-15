@@ -41,16 +41,6 @@ module Medea
     end
     #end query interface
 
-    def make_member_of obj
-      raise ArgumentError, "You can only set membership between JasonObjects!" unless obj.is_a? JasonObject
-      #@__jason_data["__member_of"] ||= []
-      #@__jason_data["__member_of"] << obj.jason_key
-
-      #for now, we can only be member of one thing.
-      @__jason_data["__member_of"] = obj.jason_key
-      @__jason_state = :dirty
-    end
-
     #"flexihash" access interface
     def []=(key, value)
       @__jason_data ||= {}

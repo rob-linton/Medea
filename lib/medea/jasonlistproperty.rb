@@ -34,17 +34,22 @@ module Medea
       
       if member.jason_state == :new
         #we want to save it first? probably...
+        member.save!
       end
       #post to JasonDB::db_auth_url/a_class.name/
       url = "#{JasonDB::db_auth_url}#{@class.name}/#{@init_query}/#{@list_name}/#{member.jason_key}"
       post_headers = {
             :content_type => 'application/json',
-            "X-CLASS" => @list_name,
-            "X-KEY" => member.jason_key,
-            "X-PARENT" => @init_query
+            "HTTP_X_CLASS" => @list_name,
+            "HTTP_X_KEY" => member.jason_key,
+            "HTTP_X_PARENT" => @init_query
       }
-
-      response = RestClient.post url, "", post_headers
+      content = {
+          "_id" => member.jason_key,
+          "_parent" => @init_query
+      }
+      puts post_headers
+      response = RestClient.post url, content.to_json, post_headers
 
       if response.code == 201
           #save successful!
@@ -61,7 +66,7 @@ module Medea
       url = "#{JasonDB::db_auth_url}@#{time_limit}.#{result_format}?"
       params = ["VERSION0",
                 "FAST",
-                "FILTER=HTTP_X_CLASS:#{@class.name}",
+                "FILTER=HTTP_X_CLASS:#{@list_name}",
                 "FILTER=HTTP_X_PARENT:#{@init_query}"]
       
       url << params.join("&")
