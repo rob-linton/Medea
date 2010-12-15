@@ -8,6 +8,28 @@ module Medea
 
     #include JasonDB
 
+    #meta-programming interface for lists
+    def self.has_many list_name, list_type
+      list = {}
+      list = self.class_variable_get :@@lists if self.class_variable_defined? :@@lists
+      list[list_name] = list_type
+      self.class_variable_set :@@lists, list
+      
+      define_method list_name, do
+        #puts "Looking at the #{list_name.to_s} list, which is full of #{list_type.name}s"
+        JasonListProperty.new list_type, list_name.to_s, self.jason_key
+      end
+    end
+
+    def self.owns_many list_name, list_type
+      self.has_many list_name, list_type
+
+      #also modify the items in the list so that they know that they're owned
+      list_type.class_variable_set :@@owner, self
+    end
+
+    #end meta
+
     #Here we're going to put the "query" interface
 
     #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
@@ -94,6 +116,14 @@ module Medea
       @__jason_etag ||= ""
     end
 
+    def jason_parent
+      @__jason_parent ||= nil
+    end
+
+    def jason_parent= parent
+      @__jason_parent = parent
+    end
+
     #object persistence methods
 
     #POSTs the current values of this object back to JasonDB
@@ -101,6 +131,8 @@ module Medea
     def save!
         #no changes? no save!
         return if @__jason_state == :stale or @__jason_state == :ghost
+
+
         payload = self.to_json
         post_headers = {
             :content_type => 'application/json',
@@ -112,9 +144,19 @@ module Medea
         }
         post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
 
+        if self.class.class_variable_defined? :@@owner
+          #the parent object needs to be defined!
+          raise "#{self.class.name} cannot be saved without setting a #{@@owner.name} parent!" unless self.jason_parent
+          post_headers["X-PARENT"] = self.jason_parent.jason_key
+          url = "#{JasonDB::db_auth_url}#{self.class.class_variable_get(:@@owner).name}/#{self.jason_parent.jason_key}/#{self.class.name}/#{self.jason_key}"
+        else
+          url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
+        end
+
+
         #puts "Posted to JasonDB!"
-        url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
-        #puts "Saving to #{url}"
+
+        puts "Saving to #{url}"
         response = RestClient.post url, payload, post_headers
 
         if response.code == 201
@@ -146,7 +188,13 @@ module Medea
 
     #fetches the data from the JasonDB
     def load
-      url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
+      if self.class.class_variable_defined? :@@owner
+        raise "Cannot load unless I know what the parent #{self.class.class_variable_get(:@@owner).name} is!" unless jason_parent
+        url = "#{JasonDB::db_auth_url}#{self.class.class_variable_get(:@@owner).name}/#{jason_parent.jason_key}/#{self.class.name}/#{self.jason_key}"
+      else
+        url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
+      end
+
       puts "Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url
       @__jason_data = JSON.parse response

@@ -13,8 +13,6 @@ module Medea
       @time_limit = 0
       @_state = :prefetch
       @contents = []
-
-
     end
 
     def method_missing name, *args, &block
@@ -66,9 +64,13 @@ module Medea
       url = "#{JasonDB::db_auth_url}@#{time_limit}.#{result_format}?"
       params = ["VERSION0",
                 "FAST",
-                "FILTER=HTTP_X_CLASS:#{@list_name}",
                 "FILTER=HTTP_X_PARENT:#{@init_query}"]
-      
+      if @class.class_variable_defined? :@@owner
+         params << "FILTER=HTTP_X_CLASS:#{@class.name}"
+      else
+        params << "FILTER=HTTP_X_CLASS:#{@list_name}"
+      end
+
       url << params.join("&")
     end
   end
