@@ -1,66 +1,38 @@
-class Parent
-  attr_accessor :id
+$: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
+require 'medea'
 
-  def initialize id
-    self.id = "parent:#{id}"
-  end
-  
-  def self.has_many list_name, list_type
-    list = {}
-    list = self.class_variable_get :@@lists if self.class_variable_defined? :@@lists
-    list[list_name] = list_type
-    self.class_variable_set :@@lists, list
-
-    define_method list_name, do
-      puts "Looking at #{self.id}'s #{list_name.to_s} list, which is full of #{list_type.name}s"
-    end
-  end
-
-  def self.owns_many list_name, list_type
-      self.has_many list_name, list_type
-
-      #also modify the items in the list so that they know that they're owned
-      list_type.class_variable_set :@@owner, self
-    end
+class Message < Medea::JasonObject
 end
 
-class Toy
-
+class User < Medea::JasonObject
+  owns_many :messages, Message
 end
 
-class Child < Parent
-  owns_many :toys, Toy
-  has_many :friends, Child
+puts "Enter an id, or blank to make a new user:"
+id = gets.strip
+if id == ""
+  u = User.new
+  puts "User's name?"
+  u.name = gets.strip
 
-  def initialize id
-    self.id = "child:#{id}"
-  end
+  puts "Saving"
+  u.save!
+else
+  u = User.get_by_key id
+  puts "#{u.name} has posted #{u.messages.count} messages"
 end
 
-class School < Parent
-  has_many :children, Child
-
-  def initialize id
-    self.id = "school:#{id}"
-  end
+while true
+  puts "Enter a message (blank to stop):"
+  message = gets.strip
+  break if message == ""
+  m = Message.new
+  m.message = message
+  m.jason_parent = u
+  m.save!
 end
 
-c = Child.new 123
-puts "Child variables:"
-c.class.class_variables.each do |k|
-  puts "#{k} => #{c.class.class_variable_get k}"
+puts "Fetching messages..."
+u.messages.each do |m|
+  puts " - #{m.message}\n"
 end
-c.toys
-
-puts "Toy variables:"
-Toy.class_variables.each do |k|
-  puts "#{k} => #{Toy.class_variable_get k}"
-end
-
-s = School.new 321
-#s.toys
-puts "School variables:"
-s.class.class_variables.each do |k|
-  puts "#{k} => #{s.class.class_variable_get k}"
-end
-s.children
