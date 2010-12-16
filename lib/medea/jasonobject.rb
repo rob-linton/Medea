@@ -9,23 +9,32 @@ module Medea
     #include JasonDB
 
     #meta-programming interface for lists
-    def self.has_many list_name, list_type
+    include ClassLevelInheritableAttributes
+    inheritable_attributes :owned
+    @owned = false
+
+    def self.create_member_list list_name, list_class, list_type
       list = {}
       list = self.class_variable_get :@@lists if self.class_variable_defined? :@@lists
-      list[list_name] = list_type
+      list[list_name] = [list_class, list_type]
       self.class_variable_set :@@lists, list
-      
+
       define_method list_name, do
         #puts "Looking at the #{list_name.to_s} list, which is full of #{list_type.name}s"
-        JasonListProperty.new list_type, list_name.to_s, self.jason_key
+        JasonListProperty.new self, list_name, list_class, list_type
       end
     end
 
-    def self.owns_many list_name, list_type
-      self.has_many list_name, list_type
+    def self.has_many list_name, list_class
+      create_member_list list_name, list_class, :reference
+    end
+
+    def self.owns_many list_name, list_class
+      create_member_list list_name, list_class, :value
 
       #also modify the items in the list so that they know that they're owned
-      list_type.class_variable_set :@@owner, self
+      #list_type.class_variable_set :@@owner, self
+      list_class.owned = true
     end
 
     #end meta
@@ -55,7 +64,9 @@ module Medea
         return q.members_of args[0]
       elsif name =~ /^find_by_(.*)$/
         #use the property name from the name variable, and the value from the first arg
-        return q.add_data_filter $1, args[0]
+        q.add_data_filter $1, args[0]
+
+        return q
       else
         #no method!
         super
@@ -120,6 +131,14 @@ module Medea
       @__jason_parent ||= nil
     end
 
+    def jason_parent_list
+      @__jason_parent_list ||= nil
+    end
+
+    def jason_parent_list= value
+      @__jason_parent_list = value
+    end
+
     def jason_parent= parent
       @__jason_parent = parent
     end
@@ -136,7 +155,7 @@ module Medea
         payload = self.to_json
         post_headers = {
             :content_type => 'application/json',
-            "X-CLASS" => self.class.name,
+
             "X-KEY" => self.jason_key
             #also want to add the eTag here!
             #may also want to add any other indexable fields that the user specifies?
@@ -144,13 +163,15 @@ module Medea
         }
         post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
 
-        if self.class.class_variable_defined? :@@owner
+        if self.class.owned
           #the parent object needs to be defined!
-          raise "#{self.class.name} cannot be saved without setting a #{@@owner.name} parent!" unless self.jason_parent
+          raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
           post_headers["X-PARENT"] = self.jason_parent.jason_key
-          url = "#{JasonDB::db_auth_url}#{self.class.class_variable_get(:@@owner).name}/#{self.jason_parent.jason_key}/#{self.class.name}/#{self.jason_key}"
+          url = "#{JasonDB::db_auth_url}#{self.jason_parent.class.name}/#{self.jason_parent.jason_key}/#{self.jason_parent_list}/#{self.jason_key}"
+          post_headers["X-CLASS"] = self.jason_parent_list
         else
           url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
+          post_headers["X-CLASS"] = self.class.name
         end
 
 

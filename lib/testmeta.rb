@@ -28,11 +28,10 @@ while true
   break if message == ""
   m = Message.new
   m.message = message
-  m.jason_parent = u
-  m.save!
+  u.messages.add! m
 end
 
 puts "Fetching messages..."
-u.messages.each do |m|
-  puts " - #{m.message}\n"
+u.messages.each do |e|
+  puts " - #{e.message}\n"
 end
