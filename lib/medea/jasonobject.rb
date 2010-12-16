@@ -156,7 +156,7 @@ module Medea
 
         #puts "Posted to JasonDB!"
 
-        puts "Saving to #{url}"
+        #puts "Saving to #{url}"
         response = RestClient.post url, payload, post_headers
 
         if response.code == 201
@@ -188,14 +188,17 @@ module Medea
 
     #fetches the data from the JasonDB
     def load
-      if self.class.class_variable_defined? :@@owner
-        raise "Cannot load unless I know what the parent #{self.class.class_variable_get(:@@owner).name} is!" unless jason_parent
-        url = "#{JasonDB::db_auth_url}#{self.class.class_variable_get(:@@owner).name}/#{jason_parent.jason_key}/#{self.class.name}/#{self.jason_key}"
-      else
-        url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
-      end
+      #because this object might be owned by another, we need to search by key.
+      #not passing a format to the query is a shortcut to getting just the object.
+      url = "#{JasonDB::db_auth_url}@0?"
+      params = [
+          "FILTER=HTTP_X_CLASS:#{self.class.name}",
+          "FILTER=HTTP_X_KEY:#{self.jason_key}"
+      ]
 
-      puts "Retrieving #{self.class.name} at #{url}"
+      url << params.join("&")
+
+      #puts "Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]

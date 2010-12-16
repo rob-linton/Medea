@@ -103,7 +103,7 @@ module Medea
       #hit the URL
       #fill @contents with :ghost versions of JasonObjects
       begin
-        puts "Executing #{@class.name} deferred query! (#{to_url})"
+        #puts "Executing #{@class.name} deferred query! (#{to_url})"
         result = JSON.parse(RestClient.get to_url)
 
         #results are in a hash, their keys are just numbers
@@ -113,9 +113,6 @@ module Medea
             /\/([^\/]*)\/([^\/]*)$/.match result[k]["POST_TO"]
             #$1 is the class name, $2 is the key
             item = @class.new($2, :lazy)
-            if @class.class_variable_defined? :@@owner
-              item.jason_parent = @class.class_variable_get(:@@owner).new(result[k]["HTTP_X_PARENT"], :lazy)
-            end
             @contents << item
           end
         end
