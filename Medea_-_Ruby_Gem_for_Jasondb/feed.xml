@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ <id>urn:iweb:FFF98D84-0CC0-4772-949B-00DDCB96EBC7</id>
+ <title>Page list Atom feed</title>
+ <updated>2010-12-16T15:02:55+11:00</updated>
+ <link rel="self" href="feed.xml"/>
+ <generator>iWeb</generator>
+ <author>
+  <name>iWeb</name>
+ </author>
+ <entry>
+  <id>urn:iweb:71AAC3D7-6318-4BDC-9F2D-CBF8A07E3FC6</id>
+  <title>Home</title>
+  <title xmlns="urn:iweb:">Home</title>
+  <in-navbar xmlns="urn:iweb:">71AAC3D7-6318-4BDC-9F2D-CBF8A07E3FC6</in-navbar>
+  <link rel="alternate" href="Home.html"/>
+  <updated>2010-12-16T15:02:55.001+11:00</updated>
+  <content>Home</content>
+ </entry>
+ <entry>
+  <id>urn:iweb:B9E6BCC6-20BC-4EDB-9E2A-EC16DF47D1E7</id>
+  <title>GitHub</title>
+  <title xmlns="urn:iweb:">GitHub</title>
+  <in-navbar xmlns="urn:iweb:">B9E6BCC6-20BC-4EDB-9E2A-EC16DF47D1E7</in-navbar>
+  <link rel="alternate" href="GitHub.html"/>
+  <updated>2010-12-16T15:02:55.002+11:00</updated>
+  <content>GitHub</content>
+ </entry>
+</feed>
