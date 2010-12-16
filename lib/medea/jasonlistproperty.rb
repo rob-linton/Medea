@@ -2,24 +2,27 @@ module Medea
   require 'cgi'
   require 'rest_client'
   class JasonListProperty < JasonDeferredQuery
+
+    attr_accessor :list_name, :init_query
+
     def initialize a_class, list_name, init_query, source=:object
       #inspect the class a_class and see if it has any list properties
       #these will have been defined with has_many and owns_many
-      @class = a_class
+      @type = a_class
       @list_name = list_name
       @init_query = init_query
       @source = source
       @result_format = :json
       @time_limit = 0
-      @_state = :prefetch
+      @state = :prefetch
       @contents = []
     end
 
     def method_missing name, *args, &block
       #is this a list property on the base class?
-      if @class.class_variables_get(:@@lists).has_key? name
+      if @type.class_variable_get(:@@lists).has_key? name
         #if so, we'll just return a new ListProperty with my query as the init_query
-        JasonListProperty.new @class.class_variables_get(:@@lists)[name], name.to_s, to_url, :list
+        JasonListProperty.new @type.class_variable_get(:@@lists)[name], name.to_s, to_url, :list
       else
         #no method, let JasonDeferredQuery handle it
         super
@@ -27,7 +30,7 @@ module Medea
     end
 
     def add! member
-      raise ArgumentError, "You can only add #{@class.name} items to this collection!" unless member.is_a? @class
+      raise ArgumentError, "You can only add #{@type.name} items to this collection!" unless member.is_a? @type
       raise RuntimeError, "You can only add an item if you are accessing this list from an object." if @source == :list
       
       if member.jason_state == :new
@@ -35,7 +38,7 @@ module Medea
         member.save!
       end
       #post to JasonDB::db_auth_url/a_class.name/
-      url = "#{JasonDB::db_auth_url}#{@class.name}/#{@init_query}/#{@list_name}/#{member.jason_key}"
+      url = "#{JasonDB::db_auth_url}#{@type.name}/#{@init_query}/#{@list_name}/#{member.jason_key}"
       post_headers = {
             :content_type => 'application/json',
             "HTTP_X_CLASS" => @list_name,
@@ -65,8 +68,8 @@ module Medea
       params = ["VERSION0",
                 "FAST",
                 "FILTER=HTTP_X_PARENT:#{@init_query}"]
-      if @class.class_variable_defined? :@@owner
-         params << "FILTER=HTTP_X_CLASS:#{@class.name}"
+      if self.type.class_variable_defined? :@@owner
+         params << "FILTER=HTTP_X_CLASS:#{@type.name}"
       else
         params << "FILTER=HTTP_X_CLASS:#{@list_name}"
       end
