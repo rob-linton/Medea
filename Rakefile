@@ -13,7 +13,6 @@ begin
     s.files.exclude '{lib}/test*'
     s.add_dependency 'json'
     s.add_dependency 'rest-client'
-    s.add_dependency 'uri'
   end
 rescue LoadError
   puts "Jeweler, or one of its dependencies, is not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
