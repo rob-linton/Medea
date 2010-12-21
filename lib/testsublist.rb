@@ -8,12 +8,34 @@ class User < Medea::JasonObject
   has_many :followees, User
 end
 
-#load up Terence
-u = User.get_by_key "p802337000"
+u1 = User.new
+u1.name = "Fred"
+u1.save!
 
-puts "#{u.name} is following #{u.followees.count} users"
+u2 = User.new
+u2.name = "George"
+u2.save!
 
-puts "#{u.name}'s timeline:"
-u.followees.messages.each do |m|
-  puts " - #{m.message}"
+u1.followees.add! u2
+
+m1 = Message.new
+m1.from = u2.name
+m1.message = "Hello! This is George"
+u2.messages.add! m1
+m1.save!
+
+m2 = Message.new
+m2.from = u2.name
+m2.message = "Man, this is a long day!"
+u2.messages.add! m2
+m2.save!
+
+puts "#{u2.name} has posted #{u2.messages.count} messages"
+
+puts "#{u1.name} is following #{u1.followees.count} users"
+puts "#{u1.name}'s timeline has #{u1.followees.messages.count} messages in it"
+
+u1.followees.messages.each do |m|
+  puts "#{m.from}:"
+  puts "      #{m.message}"
 end

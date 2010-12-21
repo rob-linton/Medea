@@ -156,10 +156,10 @@ module Medea
         post_headers = {
             :content_type => 'application/json',
 
-            "X-KEY" => self.jason_key
+            "X-KEY" => self.jason_key,
+            "X-CLASS" => self.class.name
             #also want to add the eTag here!
             #may also want to add any other indexable fields that the user specifies?
-            #may also want to add this object's guid?
         }
         post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
 
@@ -168,10 +168,9 @@ module Medea
           raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
           post_headers["X-PARENT"] = self.jason_parent.jason_key
           url = "#{JasonDB::db_auth_url}#{self.jason_parent.class.name}/#{self.jason_parent.jason_key}/#{self.jason_parent_list}/#{self.jason_key}"
-          post_headers["X-CLASS"] = self.jason_parent_list
+          post_headers["X-LIST"] = self.jason_parent_list
         else
           url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
-          post_headers["X-CLASS"] = self.class.name
         end
 
 
@@ -211,15 +210,16 @@ module Medea
     def load
       #because this object might be owned by another, we need to search by key.
       #not passing a format to the query is a shortcut to getting just the object.
-      url = "#{JasonDB::db_auth_url}@0?"
+      url = "#{JasonDB::db_auth_url}@0.content?"
       params = [
+          "VERSION0",
           "FILTER=HTTP_X_CLASS:#{self.class.name}",
           "FILTER=HTTP_X_KEY:#{self.jason_key}"
       ]
 
       url << params.join("&")
 
-      #puts "Retrieving #{self.class.name} at #{url}"
+      puts "   = Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]

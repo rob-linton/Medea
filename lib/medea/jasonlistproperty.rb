@@ -18,7 +18,7 @@ module Medea
 
     def method_missing name, *args, &block
       #is this a list property on the base class?
-      if @type.class_variable_get(:@@lists).has_key? name
+      if (@type.class_variable_defined? :@@lists) && (@type.class_variable_get(:@@lists).has_key? name)
         #if so, we'll just return a new ListProperty with my query as the parent
         new_list_class, new_list_type = @type.class_variable_get(:@@lists)[name]
         base_query = self.clone
@@ -43,16 +43,17 @@ module Medea
         url = "#{JasonDB::db_auth_url}#{@type.name}/#{@parent.jason_key}/#{@list_name}/#{member.jason_key}"
         post_headers = {
               :content_type => 'application/json',
-              "X-CLASS" => @list_name.to_s,
+              "X-CLASS" => @type.name,
               "X-KEY" => member.jason_key,
-              "X-PARENT" => @parent.jason_key
+              "X-PARENT" => @parent.jason_key,
+              "X-LIST" => @list_name.to_s
         }
         content = {
             "_id" => member.jason_key,
             "_parent" => @parent.jason_key
         }
-        puts url
-        puts post_headers
+        puts "   = " + url
+        puts "   = #{post_headers}"
         response = RestClient.post url, content.to_json, post_headers
 
         if response.code == 201
@@ -80,13 +81,19 @@ module Medea
       url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@result_format}?"
       params = ["VERSION0"]
 
-      params << "FILTER=HTTP_X_CLASS:#{@list_name.to_s}"
+      params << "FILTER=HTTP_X_CLASS:#{@type.name}"
 
       if @parent.is_a? JasonObject
         params << "FILTER=HTTP_X_PARENT:#{@parent.jason_key}"
       else # @parent.is_a? JasonListProperty ##(or DeferredQuery?)
-        subquery = URI.escape("<%@LANGUAGE=\"URL\" #{@parent.to_url}%>", Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
-        params << "FILTER={HTTP_X_PARENT:#{subquery}}"
+        #we can get the insecure url here, because it will be resolved and executed at JasonDB - on a secure subnet.
+
+        #subquery = "<%@LANGUAGE=\"URL\" #{@parent.to_url}%>"
+        puts "   = Fetching subquery stupidly. (#{@parent.to_url})"
+
+        subquery = (RestClient.get @parent.to_url).strip
+        puts "   =   Result: #{subquery}"
+        params << URI.escape("FILTER={HTTP_X_PARENT:#{subquery}}", Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
       end
 
       url << params.join("&")

@@ -5,11 +5,13 @@ module JasonDB
 
 
 
-    def JasonDB::db_auth_url
+    def JasonDB::db_auth_url mode=:secure
       user = "michael"
-      jason_url = "rest.jasondb.com/michael/"
+      jason_url = "rest.jasondb.com/medea-test/"
       password = "password"
-      "https://#{user}:#{password}@#{jason_url}"
+      protocol = "http"
+      protocol << "s" if mode == :secure
+      "#{protocol}://#{user}:#{password}@#{jason_url}"
     end
 
 end

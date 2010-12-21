@@ -98,12 +98,11 @@ module Medea
     end
     #end array interface
 
-    private
     def execute_query
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
       begin
-        puts "Executing #{type.name} deferred query! (#{to_url})"
+        puts "   = Executing #{type.name} deferred query! (#{to_url})"
         result = JSON.parse(RestClient.get to_url)
 
         #results are in a hash, their keys are just numbers
