@@ -219,7 +219,7 @@ module Medea
 
       url << params.join("&")
 
-      puts "   = Retrieving #{self.class.name} at #{url}"
+      #puts "   = Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]

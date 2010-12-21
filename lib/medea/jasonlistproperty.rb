@@ -52,8 +52,8 @@ module Medea
             "_id" => member.jason_key,
             "_parent" => @parent.jason_key
         }
-        puts "   = " + url
-        puts "   = #{post_headers}"
+        #puts "   = " + url
+        #puts "   = #{post_headers}"
         response = RestClient.post url, content.to_json, post_headers
 
         if response.code == 201
@@ -89,10 +89,10 @@ module Medea
         #we can get the insecure url here, because it will be resolved and executed at JasonDB - on a secure subnet.
 
         #subquery = "<%@LANGUAGE=\"URL\" #{@parent.to_url}%>"
-        puts "   = Fetching subquery stupidly. (#{@parent.to_url})"
+        #puts "   = Fetching subquery stupidly. (#{@parent.to_url})"
 
         subquery = (RestClient.get @parent.to_url).strip
-        puts "   =   Result: #{subquery}"
+        #puts "   =   Result: #{subquery}"
         params << URI.escape("FILTER={HTTP_X_PARENT:#{subquery}}", Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
       end
 

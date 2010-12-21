@@ -28,6 +28,7 @@ while true
   break if message == ""
   m = Message.new
   m.message = message
+  m.from = u.name
   u.messages.add! m
 end
 
