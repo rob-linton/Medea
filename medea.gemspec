@@ -5,13 +5,13 @@
 
 Gem::Specification.new do |s|
   s.name = %q{medea}
-  s.version = "0.1.0"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Jensen"]
-  s.date = %q{2010-12-13}
+  s.date = %q{2010-12-21}
   s.description = %q{Simple wrapper for persisting objects to JasonDB}
-  s.email = %q{michaelj@logicaltech.com.au}
+  s.email = %q{michaelj@jasondb.com}
   s.extra_rdoc_files = [
     "README"
   ]
@@ -19,11 +19,16 @@ Gem::Specification.new do |s|
     "README",
      "Rakefile",
      "VERSION",
+     "assets.file",
+     "assets.http",
      "index.html",
      "lib/medea.rb",
+     "lib/medea/inheritable_attributes.rb",
      "lib/medea/jasondb.rb",
      "lib/medea/jasondeferredquery.rb",
-     "lib/medea/jasonobject.rb"
+     "lib/medea/jasonlistproperty.rb",
+     "lib/medea/jasonobject.rb",
+     "medea.gemspec"
   ]
   s.homepage = %q{https://github.com/rob-linton/Medea}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -38,12 +43,15 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<json>, [">= 0"])
       s.add_runtime_dependency(%q<rest-client>, [">= 0"])
+      s.add_runtime_dependency(%q<cgi>, [">= 0"])
     else
       s.add_dependency(%q<json>, [">= 0"])
       s.add_dependency(%q<rest-client>, [">= 0"])
+      s.add_dependency(%q<cgi>, [">= 0"])
     end
   else
     s.add_dependency(%q<json>, [">= 0"])
     s.add_dependency(%q<rest-client>, [">= 0"])
+    s.add_dependency(%q<cgi>, [">= 0"])
   end
 end
