@@ -3,6 +3,7 @@
 module Medea
   require 'rest_client'
   require 'json'
+  require 'uuidtools'
 
   class JasonObject
 
@@ -115,8 +116,9 @@ module Medea
     end
 
     def jason_key
-        #TODO: Replace this string with a guid generator of some kind
-        @__id ||= "p#{Time.now.nsec.to_s}"
+        #Generate a random UUID for this object.
+	#since jason urls must start with a letter, we'll use the first letter of the class name
+        @__id ||= "#{self.class.name[0].downcase}#{UUIDTools::UUID::random_create.to_s}"
     end
 
     def jason_state
