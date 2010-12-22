@@ -1,5 +1,6 @@
 
 $: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
+require 'rubygems'
 require 'medea'
 
 class Person < Medea::JasonObject

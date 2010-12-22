@@ -27,7 +27,9 @@ module Medea
         self.contents = []
       end
 
-      if name =~ /^members_of$/
+      field = name.to_s	
+
+      if field =~ /^members_of$/
         #use the type and key of the first arg (being a JasonObject)
         #args[0] must be a JasonObject (or child)
         raise ArgumentError, "When looking for members, you must pass a JasonObject" unless args[0].is_a? JasonObject
@@ -35,7 +37,7 @@ module Medea
         self.filters[:DATA_FILTER] ||= {}
         self.filters[:DATA_FILTER]["__member_of"] ||= []
         self.filters[:DATA_FILTER]["__member_of"] << args[0].jason_key
-      elsif name =~ /^find_by_(.*)$/
+      elsif field =~ /^find_by_(.*)$/
         #use the property name from the name variable, and the value from the first arg
         add_data_filter $1, args[0].to_s
       else

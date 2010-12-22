@@ -60,10 +60,10 @@ module Medea
     #Will return a JasonDeferredQuery for this class with the appropriate data filter set
     def JasonObject.method_missing(name, *args, &block)
       q = JasonDeferredQuery.new self
-      if name =~ /^members_of$/
+      if name.to_s =~ /^members_of$/
         #use the type and key of the first arg (being a JasonObject)
         return q.members_of args[0]
-      elsif name =~ /^find_by_(.*)$/
+      elsif name.to_s =~ /^find_by_(.*)$/
         #use the property name from the name variable, and the value from the first arg
         q.add_data_filter $1, args[0]
 
@@ -90,13 +90,14 @@ module Medea
     # Assigning any attribute will add it to the object's hash (and then be POSTed to JasonDB on the next save)
     def method_missing(name, *args, &block)
         load if @__jason_state == :ghost
-        if name =~ /(.*)=$/  # We're assigning
+        field = name.to_s
+        if field =~ /(.*)=$/  # We're assigning
             @__jason_state = :dirty if @__jason_state == :stale
             self[$1] = args[0]
-        elsif name =~ /(.*)\?$/  # We're asking
+        elsif field =~ /(.*)\?$/  # We're asking
             (self[$1] ? true : false)
         else
-            self[name.to_s]
+            self[field]
         end
     end
     #end "flexihash" access
