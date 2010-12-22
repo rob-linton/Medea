@@ -118,7 +118,7 @@ module Medea
     def jason_key
         #Generate a random UUID for this object.
 	#since jason urls must start with a letter, we'll use the first letter of the class name
-        @__id ||= "#{self.class.name[0].downcase}#{UUIDTools::UUID::random_create.to_s}"
+        @__id ||= "#{self.class.name[0].chr.downcase}#{UUIDTools::UUID::random_create.to_s}"
     end
 
     def jason_state
