@@ -8,7 +8,10 @@ module ClassLevelInheritableAttributes
   
   module ClassMethods
     def inheritable_attributes(*args)
-      @inheritable_attributes ||= [:inheritable_attributes]
+      #for some reason, in rails, @inheritable_attributes is set to be an empty hash here...
+      #check for this strange case and account for it.
+      @inheritable_attributes = [:inheritable_attributes] if @inheritable_attributes == {} ||
+                                                             @inheritable_attributes == nil
       @inheritable_attributes += args
       args.each do |arg|
         class_eval %(

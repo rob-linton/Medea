@@ -19,7 +19,7 @@ module Medea
       list[list_name] = [list_class, list_type]
       self.class_variable_set :@@lists, list
 
-      define_method list_name, do
+      define_method(list_name) do
         #puts "Looking at the #{list_name.to_s} list, which is full of #{list_type.name}s"
         JasonListProperty.new self, list_name, list_class, list_type
       end
