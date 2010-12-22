@@ -1,17 +1,20 @@
 module JasonDB
     #jason_url here doesn't include the http[s]:// part, but does include the domain and a trailing '/'
     #( so it's "rest.jasondb.com/<domain>/" )
-    attr_accessor :jason_url, :user, :password
-
-
 
     def JasonDB::db_auth_url mode=:secure
-      user = "michael"
-      jason_url = "rest.jasondb.com/medea-test/"
-      password = "password"
+      config = Rails.configuration.database_configuration[Rails.env]
+      user = config["user"]
+      topic = config["topic"]
+      password = config["password"]
+      if config["jason_host"]
+        host = config["jason_host"]
+      else
+        host = "rest.jasondb.com"
+      end
       protocol = "http"
       protocol << "s" if mode == :secure
-      "#{protocol}://#{user}:#{password}@#{jason_url}"
+      "#{protocol}://#{user}:#{password}@#{host}/#{topic}/"
     end
 
 end
