@@ -2,9 +2,9 @@ module Medea
   class JasonDeferredQuery
     require 'rest_client'
 
-    attr_accessor :time_limit, :result_format, :type, :result_format, :time_limit, :state, :contents, :filters
+    attr_accessor :time_limit, :result_format, :type, :time_limit, :state, :contents, :filters
 
-    def initialize a_class, format=:json
+    def initialize a_class, format=:search
       @type = a_class
       @filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s}, :VERSION0 => nil}
       @result_format = format
@@ -106,7 +106,7 @@ module Medea
       begin
         #puts "   = Executing #{type.name} deferred query! (#{to_url})"
         result = JSON.parse(RestClient.get to_url)
-
+        self.contents = []
         #results are in a hash, their keys are just numbers
         result.keys.each do |k|
           if k =~ /^[0-9]+$/
@@ -114,6 +114,9 @@ module Medea
             /\/([^\/]*)\/([^\/]*)$/.match result[k]["POST_TO"]
             #$1 is the class name, $2 is the key
             item = type.new($2, :lazy)
+            if result[k].has_key? "CONTENT"
+              item.instance_variable_set(:__jason_data, result[k]["CONTENT"])
+            end
             self.contents << item
           end
         end
