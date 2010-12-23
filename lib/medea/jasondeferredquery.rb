@@ -6,7 +6,7 @@ module Medea
 
     def initialize a_class, format=:json
       @type = a_class
-      @filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s, :VERSION0 => nil}}
+      @filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s}, :VERSION0 => nil}
       @result_format = format
       @time_limit = 0
       @state = :prefetch
