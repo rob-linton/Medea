@@ -122,6 +122,10 @@ module Medea
         @__id ||= "#{self.class.name[0].chr.downcase}#{UUIDTools::UUID::random_create.to_s}"
     end
 
+    def to_s
+      jason_key
+    end
+
     def jason_state
       @__jason_state
     end
