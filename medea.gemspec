@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{medea}
-  s.version = "0.2.12"
+  s.version = "0.2.13"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Jensen"]
@@ -24,7 +24,8 @@ Gem::Specification.new do |s|
     "lib/medea/jasondb.rb",
     "lib/medea/jasondeferredquery.rb",
     "lib/medea/jasonlistproperty.rb",
-    "lib/medea/jasonobject.rb"
+    "lib/medea/jasonobject.rb",
+    "lib/medea/list_properties.rb"
   ]
   s.homepage = %q{https://github.com/rob-linton/Medea}
   s.require_paths = ["lib"]
