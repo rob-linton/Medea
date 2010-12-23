@@ -5,12 +5,12 @@ module Medea
     attr_accessor :time_limit, :result_format, :type, :time_limit, :state, :contents, :filters
 
     def initialize a_class, format=:search
-      @type = a_class
-      @filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s}, :VERSION0 => nil}
-      @result_format = format
-      @time_limit = 0
-      @state = :prefetch
-      @contents = []
+      self.type = a_class
+      self.filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s}, :VERSION0 => nil}
+      self.result_format = format
+      self.time_limit = 0
+      self.state = :prefetch
+      self.contents = []
     end
 
     #Here we're going to put the "query" interface
@@ -115,7 +115,8 @@ module Medea
             #$1 is the class name, $2 is the key
             item = type.new($2, :lazy)
             if result[k].has_key? "CONTENT"
-              item.instance_variable_set(:__jason_data, result[k]["CONTENT"])
+              item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
+              item.instance_variable_set(:@__jason_state, :stale)
             end
             self.contents << item
           end
