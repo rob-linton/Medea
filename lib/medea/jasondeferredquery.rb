@@ -100,7 +100,7 @@ module Medea
     end
     #end array interface
 
-    def execute_query
+    def execute_query content=false
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
       begin
@@ -114,7 +114,7 @@ module Medea
             /\/([^\/]*)\/([^\/]*)$/.match result[k]["POST_TO"]
             #$1 is the class name, $2 is the key
             item = type.new($2, :lazy)
-            if result[k].has_key? "CONTENT"
+            if result[k].has_key? "CONTENT" && content
               item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
               item.instance_variable_set(:@__jason_state, :stale)
             end
