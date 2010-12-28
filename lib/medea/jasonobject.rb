@@ -152,12 +152,10 @@ module Medea
           #the parent object needs to be defined!
           raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
           post_headers["X-PARENT"] = self.jason_parent.jason_key
-          url = "#{JasonDB::db_auth_url}#{self.jason_parent.class.name}/#{self.jason_parent.jason_key}/#{self.jason_parent_list}/#{self.jason_key}"
+          #url = "#{JasonDB::db_auth_url}#{self.jason_parent.class.name}/#{self.jason_parent.jason_key}/#{self.jason_parent_list}/#{self.jason_key}"
           post_headers["X-LIST"] = self.jason_parent_list
-        else
-          url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
         end
-
+        url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
 
         #puts "Posted to JasonDB!"
 
@@ -195,14 +193,15 @@ module Medea
     def load
       #because this object might be owned by another, we need to search by key.
       #not passing a format to the query is a shortcut to getting just the object.
-      url = "#{JasonDB::db_auth_url}@0.content?"
-      params = [
-          "VERSION0",
-          "FILTER=HTTP_X_CLASS:#{self.class.name}",
-          "FILTER=HTTP_X_KEY:#{self.jason_key}"
-      ]
+      #url = "#{JasonDB::db_auth_url}@0.content?"
+      #params = [
+      #    "VERSION0",
+      #    #"FILTER=HTTP_X_CLASS:#{self.class.name}",
+      #    "FILTER=HTTP_X_KEY:#{self.jason_key}"
+      #]
 
-      url << params.join("&")
+      #url << params.join("&")
+      url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
 
       #puts "   = Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url

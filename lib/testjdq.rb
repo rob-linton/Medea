@@ -1,10 +1,11 @@
-$: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
+$: << "~/Projects/Medea/lib"
 require 'medea'
 
 class Person < Medea::JasonObject
 end
 
 class Company < Medea::JasonObject
+  has_many :employees, Person
 end
 
 puts "Lets make a person!"
@@ -26,12 +27,12 @@ puts "OK - Saving"
 c.save!
 
 puts "", "Making #{p.name} a member of #{c.name}"
-p.make_member_of(c)
+c.employees.add! p
 puts "OK - Saving"
 p.save!
 
 puts "", "Now querying for Persons that are members of #{c.name}"
-r = Person.members_of(c)
+r = c.employees
 puts "Query: #{r.to_url}"
 puts "Got #{r.count} items:"
 r.each do |p|

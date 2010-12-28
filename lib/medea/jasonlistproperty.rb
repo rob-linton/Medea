@@ -10,7 +10,7 @@ module Medea
       @list_name = list_name
       @list_type = list_type
       @parent = parent
-      @result_format = :json
+      @result_format = :search
       @time_limit = 0
       @state = :prefetch
       @contents = []
@@ -43,7 +43,7 @@ module Medea
         url = "#{JasonDB::db_auth_url}#{@type.name}/#{@parent.jason_key}/#{@list_name}/#{member.jason_key}"
         post_headers = {
               :content_type => 'application/json',
-              "X-CLASS" => @type.name,
+              "X-CLASS" => @list_name.to_s,
               "X-KEY" => member.jason_key,
               "X-PARENT" => @parent.jason_key,
               "X-LIST" => @list_name.to_s
@@ -81,7 +81,7 @@ module Medea
       url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@result_format}?"
       params = ["VERSION0"]
 
-      params << "FILTER=HTTP_X_CLASS:#{@type.name}"
+      params << "FILTER=HTTP_X_CLASS:#{@list_name.to_s}"
 
       if @parent.is_a? JasonObject
         params << "FILTER=HTTP_X_PARENT:#{@parent.jason_key}"

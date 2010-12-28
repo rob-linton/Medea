@@ -1,5 +1,4 @@
-
-$: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
+$: << "~/Projects/Medea/lib"
 require 'rubygems'
 require 'medea'
 

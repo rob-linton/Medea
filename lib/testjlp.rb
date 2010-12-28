@@ -1,11 +1,11 @@
-$: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
+$: << "~/Projects/Medea/lib"
 require 'medea'
 
 class Person < Medea::JasonObject
   has_many :followees, Person
 end
 
-p = Person.get_by_key "p829093000"
+p = Person.get_by_key "p6c75c02f-ed93-4ee8-9746-3603e915be23"
 
 puts p.followees.to_url
 puts p.followees.count
