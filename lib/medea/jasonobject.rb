@@ -7,6 +7,7 @@ module Medea
 
   class JasonObject
 
+    include Medea::ActiveModelMethods
     #include JasonDB
 
     #meta-programming interface for lists
