@@ -1,7 +1,7 @@
 module Medea
   module ActiveModelMethods
     def to_model
-      jason_key
+      self
     end
 
     def errors
