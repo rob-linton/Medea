@@ -57,6 +57,8 @@ module Medea
     #"flexihash" access interface
     def []=(key, value)
       @__jason_data ||= {}
+      @__jason_state = :dirty if jason_state == :stale
+
       @__jason_data[key] = value
     end
 
@@ -71,7 +73,6 @@ module Medea
         load if @__jason_state == :ghost
         field = name.to_s
         if field =~ /(.*)=$/  # We're assigning
-            @__jason_state = :dirty if @__jason_state == :stale
             self[$1] = args[0]
         elsif field =~ /(.*)\?$/  # We're asking
             (self[$1] ? true : false)
