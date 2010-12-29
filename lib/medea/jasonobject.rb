@@ -156,6 +156,8 @@ module Medea
           post_headers["X-PARENT"] = self.jason_parent.jason_key
           #url = "#{JasonDB::db_auth_url}#{self.jason_parent.class.name}/#{self.jason_parent.jason_key}/#{self.jason_parent_list}/#{self.jason_key}"
           post_headers["X-LIST"] = self.jason_parent_list
+          #override the class to be the list name. Much simpler to search on.
+          post_headers["X-CLASS"] = self.jason_parent_list
         end
         url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
 
