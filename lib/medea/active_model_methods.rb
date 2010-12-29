@@ -9,7 +9,7 @@ module Medea
       def obj.[](key)         []    end
       def obj.full_messages() []    end
       def obj.any?()          false end
-      def count()             0     end
+      def obj.count()         0     end
       obj
     end
 
