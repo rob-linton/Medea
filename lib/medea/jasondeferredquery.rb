@@ -1,12 +1,16 @@
 module Medea
   class JasonDeferredQuery
     require 'rest_client'
+    require 'uri'
 
     attr_accessor :time_limit, :result_format, :type, :time_limit, :state, :contents, :filters
 
     def initialize a_class, format=:search
       self.type = a_class
-      self.filters = {:FILTER => {:HTTP_X_CLASS => a_class.name.to_s}, :VERSION0 => nil}
+      self.filters = { :VERSION0 => nil }
+      if self.type
+        self.filters[:FILTER] = {:HTTP_X_CLASS => a_class.name.to_s}
+      end
       self.result_format = format
       self.time_limit = 0
       self.state = :prefetch
@@ -70,10 +74,10 @@ module Medea
             val.each do |field ,value|
               if value.is_a? Array
                 value.each do |i|
-                  filter_array << "#{name.to_s}=#{field}:#{i}"
+                  filter_array << "#{name.to_s}=#{URI.escape(field)}:#{URI.escape(i)}"
                 end
               else
-                filter_array << "#{name.to_s}=#{field.to_s}:#{value.to_s}"
+                filter_array << "#{name.to_s}=#{URI.escape(field.to_s)}:#{URI.escape(value.to_s)}"
               end
             end
           end
@@ -100,7 +104,7 @@ module Medea
     end
     #end array interface
 
-    def execute_query content=false
+    def execute_query
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
       begin
@@ -114,17 +118,21 @@ module Medea
             /\/([^\/]*)\/([^\/]*)$/.match result[k]["POST_TO"]
             #$1 is the class name, $2 is the key
             item = type.new($2, :lazy)
-            if result[k].has_key? "CONTENT" && content
+            if result[k].has_key? "CONTENT" && result[k]["CONTENT"] != ""
               item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
               item.instance_variable_set(:@__jason_state, :stale)
+            end
+            if result[k].has_key? "HTTP_X_PARENT" && result[k]["HTTP_X_PARENT"] != ""
+              item.jason_parent_key = result[k]["HTTP_X_PARENT"]
             end
             self.contents << item
           end
         end
+
+        self.state = :postfetch
+        result
       rescue
         self.contents = []
-      ensure
-        self.state = :postfetch
       end
     end
   end

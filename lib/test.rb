@@ -10,6 +10,7 @@ puts "state: #{mikey.jason_state}"
 mikey.name = "Michael"
 mikey.age = 21
 mikey.location = {:longitude => -30.123213, :latitude => 130.1231458}
+puts mikey.jason_key
 puts mikey.to_json
 mikey.save!
 

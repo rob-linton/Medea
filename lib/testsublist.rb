@@ -1,4 +1,4 @@
-$: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
+$: << "~/Projects/Medea/lib"
 require 'medea'
 
 class Message < Medea::JasonObject; end
@@ -18,18 +18,22 @@ u2.save!
 
 u1.followees.add! u2
 u1.followees.add! (User.get_by_key "p438639000")
+u1.followees.add! u1
 
 m1 = Message.new
 m1.from = u2.name
 m1.message = "Hello! This is George"
 u2.messages.add! m1
-m1.save!
+
+m3 = Message.new
+m3.from = u1.name
+m3.message = "George sent me here, hope it's fun!"
+u1.messages.add! m3
 
 m2 = Message.new
 m2.from = u2.name
 m2.message = "Man, this is a long day!"
 u2.messages.add! m2
-m2.save!
 
 puts "#{u2.name} has posted #{u2.messages.count} messages"
 

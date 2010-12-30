@@ -54,6 +54,31 @@ module Medea
     end
     #end query interface
 
+    #the resolve method takes a key and returns the JasonObject that has that key
+    #This is useful when you have the key, but not the class
+    def JasonObject.resolve(key, mode=:lazy)
+      q = JasonDeferredQuery.new nil
+      q.filters[:FILTER] ||= {}
+      q.filters[:FILTER][:HTTP_X_KEY] = key
+      resp = JSON.parse(RestClient.get(q.to_url))
+      if resp.has_key? "1"
+        #this is the object, figure out its class
+        resp["1"]["POST_TO"] =~ /([^\/]+)\/#{key}/
+        begin
+          result = Kernel.const_get($1).get_by_key key, :lazy
+          if result["1"].has_key? "CONTENT"
+            result.instance_variable_set(:@__jason_data, result["1"]["CONTENT"])
+            result.instance_variable_set(:@__jason_state, :stale)
+          end
+          if mode == :eager
+            result.send(:load)
+          end
+        rescue
+          nil
+        end
+      end
+    end
+
     #"flexihash" access interface
     def []=(key, value)
       @__jason_data ||= {}
@@ -116,6 +141,26 @@ module Medea
 
     def jason_parent
       @__jason_parent ||= nil
+      if @__jason_parent == nil && @__jason_parent_key
+        #key is set but parent not? load the parent
+        @__jason_parent = JasonObject.resolve @__jason_parent_key
+      end
+      @__jason_parent
+    end
+
+    def jason_parent= parent
+      @__jason_parent = parent
+      @__jason_parent_key = parent.jason_key
+    end
+
+    def jason_parent_key
+      @__jason_parent_key ||= nil
+    end
+
+    def jason_parent_key= value
+      @__jason_parent_key = value
+      #reset the parent here?
+      @__jason_parent = nil
     end
 
     def jason_parent_list
@@ -124,10 +169,6 @@ module Medea
 
     def jason_parent_list= value
       @__jason_parent_list = value
-    end
-
-    def jason_parent= parent
-      @__jason_parent = parent
     end
 
     #object persistence methods
@@ -197,15 +238,21 @@ module Medea
     def load
       #because this object might be owned by another, we need to search by key.
       #not passing a format to the query is a shortcut to getting just the object.
-      #url = "#{JasonDB::db_auth_url}@0.content?"
-      #params = [
-      #    "VERSION0",
-      #    #"FILTER=HTTP_X_CLASS:#{self.class.name}",
-      #    "FILTER=HTTP_X_KEY:#{self.jason_key}"
-      #]
+      url = "#{JasonDB::db_auth_url}@0.content?"
+      params = [
+          "VERSION0",
+          "FILTER=HTTP_X_KEY:#{self.jason_key}"
+      ]
 
-      #url << params.join("&")
-      url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
+      if not self.class.owned
+        #if the class is owned, we don't want to filter by class name (X-CLASS will be the list name)
+        #if it isn't owned, it is safe to filter by X-CLASS
+        #if this item is "had" rather than owned, we MUST filter by class, otherwise we get the references.
+        params << "FILTER=HTTP_X_CLASS:#{self.class.name}"
+      end
+
+      url << params.join("&")
+      #url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
 
       #puts "   = Retrieving #{self.class.name} at #{url}"
       response = RestClient.get url

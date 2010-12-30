@@ -1,4 +1,4 @@
-$: << "C:/Users/michaelj.LOGICALTECH/Documents/My Dropbox/Projects/Medea/lib"
+$: << "~/Projects/Medea/lib"
 require 'medea'
 
 class Message < Medea::JasonObject
