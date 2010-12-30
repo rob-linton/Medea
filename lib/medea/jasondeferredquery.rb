@@ -102,6 +102,14 @@ module Medea
       execute_query unless self.state == :postfetch
       self.contents.count
     end
+
+    def include?(item)
+      execute_query unless self.state == :postfetch
+      self.contents.each do |i|
+        return true if i.jason_key == item.jason_key
+      end
+      false
+    end
     #end array interface
 
     def execute_query
