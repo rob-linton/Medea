@@ -77,6 +77,35 @@ module Medea
       @state = :prefetch
     end
 
+    def remove! member
+      raise RuntimeError, "You can only remove an item if you are accessing this list from an object." unless @parent.is_a? JasonObject
+      raise ArgumentError, "You can only remove #{@type.name} items from this collection!" unless member.is_a? @type
+      raise ArgumentError, "This item (#{member.jason_key}) doesn't exist in the list you're trying to remove it from!" unless self.include? member
+      
+      if @list_type == :value
+        member.jason_parent = nil
+        member.jason_parent_list = nil
+        member.save!
+      elsif @list_type == :reference
+
+        #send DELETE to JasonDB::db_auth_url/a_class.name/
+        url = "#{JasonDB::db_auth_url}#{@type.name}/#{@parent.jason_key}/#{@list_name}/#{member.jason_key}"
+
+        response = RestClient.delete url
+
+        if response.code == 201
+            #delete successful!
+        else
+            raise "DELETE failed! Could not remove membership"
+        end
+      else
+        #parent is a JasonObject, but this list is something other than :value or :reference??
+        raise "Invalid list type or trying to remove an item from a subquery list!"
+      end
+
+      @state = :prefetch
+    end
+
     def to_url
       url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@result_format}?"
       params = ["VERSION0"]
