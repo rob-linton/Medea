@@ -6,7 +6,7 @@ module JasonObjectListProperties
   module MetaListProperties
     def create_member_list list_name, list_class, list_type
       list = {}
-      list = self.class_variable_get :@@lists if self.class_variable_defined? :@@lists
+      list = self.send(:class_variable_get, :@@lists) if self.class_variable_defined? :@@lists
       list[list_name] = [list_class, list_type]
       self.send(:class_variable_set, "@@lists", list)
 
