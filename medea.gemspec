@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 require "medea/version"
 
 Gem::Specification.new do |s|
-  s.name        = "Medea"
+  s.name        = "medea"
   s.version     = Medea::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Michael Jensen"]
