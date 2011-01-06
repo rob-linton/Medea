@@ -1,4 +1,5 @@
 $: << "~/Projects/Medea/lib"
+require 'rubygems'
 require 'medea'
 
 class Message < Medea::JasonObject; end
@@ -17,7 +18,6 @@ u2.name = "George"
 u2.save!
 
 u1.followees.add! u2
-u1.followees.add! (User.get_by_key "p438639000")
 u1.followees.add! u1
 
 m1 = Message.new

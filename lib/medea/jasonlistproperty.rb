@@ -6,14 +6,18 @@ module Medea
     attr_accessor :list_name, :parent, :list_type
 
     def initialize parent, list_name, list_class, list_type
-      @type = list_class
+      super :class => list_class,
+            :format => :search,
+            :filters => {
+                :VERSION0 => nil,
+                :FILTER => {:HTTP_X_LIST => list_name}}
+
+      self.filters[:FILTER][:HTTP_X_CLASS] = list_class.name if list_type == :value
       @list_name = list_name
-      @list_type = list_type
       @parent = parent
-      @result_format = :search
-      @time_limit = 0
       @state = :prefetch
       @contents = []
+      @list_type = list_type
     end
 
     def method_missing name, *args, &block
@@ -39,11 +43,9 @@ module Medea
         member.jason_parent_list = @list_name
       elsif @list_type == :reference
 
-        #post to JasonDB::db_auth_url/a_class.name/
-        url = "#{JasonDB::db_auth_url}#{@type.name}/#{@parent.jason_key}/#{@list_name}/#{member.jason_key}"
+        url = "#{JasonDB::db_auth_url}#{@parent.class.name}/#{@parent.jason_key}/#{@list_name}/#{member.jason_key}"
         post_headers = {
               :content_type => 'application/json',
-              "X-CLASS" => @list_name.to_s,
               "X-KEY" => member.jason_key,
               "X-PARENT" => @parent.jason_key,
               "X-LIST" => @list_name.to_s
@@ -106,26 +108,31 @@ module Medea
       @state = :prefetch
     end
 
+    def execute_query
+      #call super, but don't use the content to populate if this is a reference list
+      content = @list_type == :reference ? false : true
+      super content
+    end
+
+
     def to_url
       url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@result_format}?"
       params = ["VERSION0"]
-
-      params << "FILTER=HTTP_X_CLASS:#{@list_name.to_s}"
+      params << "FILTER=HTTP_X_LIST:#{@list_name.to_s}"
 
       if @parent.is_a? JasonObject
         params << "FILTER=HTTP_X_PARENT:#{@parent.jason_key}"
       else # @parent.is_a? JasonListProperty ##(or DeferredQuery?)
         #we can get the insecure url here, because it will be resolved and executed at JasonDB - on a secure subnet.
 
-        #subquery = "<%@LANGUAGE=\"URL\" #{@parent.to_url}%>"
         #puts "   = Fetching subquery stupidly. (#{@parent.to_url})"
-
+        @parent.result_format = :keylist
         subquery = (RestClient.get @parent.to_url).strip
         #puts "   =   Result: #{subquery}"
-        params << URI.escape("FILTER={HTTP_X_PARENT:#{subquery}}", Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
+        params << "FILTER={HTTP_X_PARENT:#{subquery}}"
       end
 
-      url << params.join("&")
+      url << URI.escape(params.join("&"), Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
     end
   end
 end

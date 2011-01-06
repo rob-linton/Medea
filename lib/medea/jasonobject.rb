@@ -24,7 +24,7 @@ module Medea
     #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
     #if mode is set to :eager, we create the JasonDeferredQuery, invoke it's execution and then return it
     def JasonObject.all(mode=:lazy)
-      JasonDeferredQuery.new self
+      JasonDeferredQuery.new :class => self, :filters => {:FILTER => {:HTTP_X_CLASS => self}}
     end
 
     #returns the JasonObject by directly querying the URL
@@ -38,7 +38,8 @@ module Medea
     #find_by_<property>(value)
     #Will return a JasonDeferredQuery for this class with the appropriate data filter set
     def JasonObject.method_missing(name, *args, &block)
-      q = JasonDeferredQuery.new self
+
+      q = all
       if name.to_s =~ /^members_of$/
         #use the type and key of the first arg (being a JasonObject)
         return q.members_of args[0]
@@ -57,7 +58,7 @@ module Medea
     #the resolve method takes a key and returns the JasonObject that has that key
     #This is useful when you have the key, but not the class
     def JasonObject.resolve(key, mode=:lazy)
-      q = JasonDeferredQuery.new nil
+      q = JasonDeferredQuery.new :filters => {:FILTER => {:HTTP_X_KEY => key}}
       q.filters[:FILTER] ||= {}
       q.filters[:FILTER][:HTTP_X_KEY] = key
       resp = JSON.parse(RestClient.get(q.to_url))
@@ -183,7 +184,6 @@ module Medea
         payload = self.to_json
         post_headers = {
             :content_type => 'application/json',
-
             "X-KEY" => self.jason_key,
             "X-CLASS" => self.class.name
             #also want to add the eTag here!
@@ -194,12 +194,12 @@ module Medea
         if self.class.owned
           #the parent object needs to be defined!
           raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
-          post_headers["X-PARENT"] = self.jason_parent.jason_key
-          #url = "#{JasonDB::db_auth_url}#{self.jason_parent.class.name}/#{self.jason_parent.jason_key}/#{self.jason_parent_list}/#{self.jason_key}"
-          post_headers["X-LIST"] = self.jason_parent_list
-          #override the class to be the list name. Much simpler to search on.
-          post_headers["X-CLASS"] = self.jason_parent_list
         end
+
+        post_headers["X-PARENT"] = self.jason_parent.jason_key if self.jason_parent
+        post_headers["X-LIST"] = self.jason_parent_list if self.jason_parent_list
+
+
         url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
 
         #puts "Posted to JasonDB!"
@@ -241,15 +241,9 @@ module Medea
       url = "#{JasonDB::db_auth_url}@0.content?"
       params = [
           "VERSION0",
-          "FILTER=HTTP_X_KEY:#{self.jason_key}"
-      ]
-
-      if not self.class.owned
-        #if the class is owned, we don't want to filter by class name (X-CLASS will be the list name)
-        #if it isn't owned, it is safe to filter by X-CLASS
-        #if this item is "had" rather than owned, we MUST filter by class, otherwise we get the references.
-        params << "FILTER=HTTP_X_CLASS:#{self.class.name}"
-      end
+          "FILTER=HTTP_X_KEY:#{self.jason_key}",
+          "FILTER=HTTP_X_CLASS:#{self.class.name}"
+      ] 
 
       url << params.join("&")
       #url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"

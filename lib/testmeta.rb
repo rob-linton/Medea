@@ -1,4 +1,5 @@
 $: << "~/Projects/Medea/lib"
+require 'rubygems'
 require 'medea'
 
 class Message < Medea::JasonObject

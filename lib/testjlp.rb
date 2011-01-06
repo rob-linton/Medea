@@ -1,11 +1,12 @@
 $: << "~/Projects/Medea/lib"
+require 'rubygems'
 require 'medea'
 
 class Person < Medea::JasonObject
   has_many :followees, Person
 end
 
-p = Person.get_by_key "p6c75c02f-ed93-4ee8-9746-3603e915be23"
+p = Person.get_by_key "pa76b65a2-ba64-4cf0-8b37-7ad6a30ee8db"
 
 puts p.followees.to_url
 puts p.followees.count

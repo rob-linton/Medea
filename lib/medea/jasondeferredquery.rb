@@ -1,18 +1,15 @@
 module Medea
-  class JasonDeferredQuery
+  class   JasonDeferredQuery
     require 'rest_client'
     require 'uri'
 
     attr_accessor :time_limit, :result_format, :type, :time_limit, :state, :contents, :filters
 
-    def initialize a_class, format=:search
-      self.type = a_class
-      self.filters = { :VERSION0 => nil }
-      if self.type
-        self.filters[:FILTER] = {:HTTP_X_CLASS => a_class.name.to_s}
-      end
-      self.result_format = format
-      self.time_limit = 0
+    def initialize opts={}
+      self.type = opts[:class] if opts[:class]
+      self.filters = opts[:filters] if opts[:filters]
+      self.result_format = opts[:format] ? opts[:format] : :search
+      self.time_limit = opts[:time_limit] ? opts[:time_limit] : 0
       self.state = :prefetch
       self.contents = []
     end
@@ -62,9 +59,10 @@ module Medea
     def to_url
       url = "#{JasonDB::db_auth_url}@#{self.time_limit}.#{self.result_format}?"
       filter_array = []
+      unsafe = Regexp.new("[^#{URI::PATTERN::UNRESERVED}]")
       self.filters.each do |name, val|
         if not val
-          filter_array << name.to_s
+          filter_array << URI.escape(name.to_s, unsafe)
           next
         else
           #FILTER's value is a hash (to avoid dupes)
@@ -74,10 +72,10 @@ module Medea
             val.each do |field ,value|
               if value.is_a? Array
                 value.each do |i|
-                  filter_array << "#{name.to_s}=#{URI.escape(field)}:#{URI.escape(i)}"
+                  filter_array << URI.escape("#{name.to_s}=#{field}:#{i}", unsafe)
                 end
               else
-                filter_array << "#{name.to_s}=#{URI.escape(field.to_s)}:#{URI.escape(value.to_s)}"
+                filter_array << URI.escape("#{name.to_s}=#{field.to_s}:#{value.to_s}", unsafe)
               end
             end
           end
@@ -112,7 +110,7 @@ module Medea
     end
     #end array interface
 
-    def execute_query
+    def execute_query content=true
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
       begin
@@ -123,10 +121,8 @@ module Medea
         result.keys.each do |k|
           if k =~ /^[0-9]+$/
             #this is a result! get the key
-            /\/([^\/]*)\/([^\/]*)$/.match result[k]["POST_TO"]
-            #$1 is the class name, $2 is the key
-            item = type.new($2, :lazy)
-            if result[k].has_key?("CONTENT") && result[k]["CONTENT"] != ""
+            item = type.new(result[k]["HTTP_X_KEY"], :lazy)
+            if content && result[k].has_key?("CONTENT") && result[k]["CONTENT"] != ""
               item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
               item.instance_variable_set(:@__jason_state, :stale)
             end
