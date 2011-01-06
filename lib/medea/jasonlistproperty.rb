@@ -10,7 +10,8 @@ module Medea
             :format => :search,
             :filters => {
                 :VERSION0 => nil,
-                :FILTER => {:HTTP_X_LIST => list_name}}
+                :FILTER => {:HTTP_X_LIST => list_name,
+                            :HTTP_X_ACTION => :POST}}
 
       self.filters[:FILTER][:HTTP_X_CLASS] = list_class.name if list_type == :value
       @list_name = list_name

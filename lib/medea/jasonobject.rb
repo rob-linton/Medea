@@ -24,7 +24,7 @@ module Medea
     #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
     #if mode is set to :eager, we create the JasonDeferredQuery, invoke it's execution and then return it
     def JasonObject.all(mode=:lazy)
-      JasonDeferredQuery.new :class => self, :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_CLASS => self}}
+      JasonDeferredQuery.new :class => self, :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_CLASS => self, :HTTP_X_ACTION => :POST}}
     end
 
     #returns the JasonObject by directly querying the URL
@@ -58,7 +58,7 @@ module Medea
     #the resolve method takes a key and returns the JasonObject that has that key
     #This is useful when you have the key, but not the class
     def JasonObject.resolve(key, mode=:lazy)
-      q = JasonDeferredQuery.new :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_KEY => key}}
+      q = JasonDeferredQuery.new :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_KEY => key, :HTTP_X_ACTION => :POST}}
       q.filters[:FILTER] ||= {}
       q.filters[:FILTER][:HTTP_X_KEY] = key
       resp = JSON.parse(RestClient.get(q.to_url))
@@ -129,7 +129,7 @@ module Medea
 
     def jason_key
         #Generate a random UUID for this object.
-	#since jason urls must start with a letter, we'll use the first letter of the class name
+	      #since jason urls must start with a letter, we'll use the first letter of the class name
         @__id ||= "#{self.class.name[0].chr.downcase}#{UUIDTools::UUID::random_create.to_s}"
     end
 
@@ -185,43 +185,7 @@ module Medea
         #no changes? no save!
         return if @__jason_state == :stale or @__jason_state == :ghost
 
-
-        payload = self.to_json
-        post_headers = {
-            :content_type => 'application/json',
-            "X-KEY" => self.jason_key,
-            "X-CLASS" => self.class.name
-            #also want to add the eTag here!
-            #may also want to add any other indexable fields that the user specifies?
-        }
-        post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
-
-        if self.class.owned
-          #the parent object needs to be defined!
-          raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
-        end
-
-        post_headers["X-PARENT"] = self.jason_parent.jason_key if self.jason_parent
-        post_headers["X-LIST"] = self.jason_parent_list if self.jason_parent_list
-
-
-        url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
-
-        #puts "Posted to JasonDB!"
-
-        #puts "Saving to #{url}"
-        response = RestClient.post url, payload, post_headers
-
-        if response.code == 201
-            #save successful!
-            #store the new eTag for this object
-            #puts response.raw_headers
-            #@__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
-        else
-            raise "POST failed! Could not save object"
-        end
-
-        @__jason_state = :stale
+        persist_changes :post
     end
 
     def delete! cascade=false
@@ -237,9 +201,7 @@ module Medea
           end
         end
       end
-      url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
-      response = RestClient.delete url
-      raise "DELETE failed!" unless response.code == 201
+      persist_changes :delete
     end
 
     #end object persistence
@@ -272,10 +234,47 @@ module Medea
       @__jason_state = :stale
     end
 
-    def lazy_load meta
-      #TODO Implement lazy load
-      
-      @__jason_state = :ghost
+    def persist_changes method = :post
+      payload = self.to_json
+
+      post_headers = {
+          :content_type => 'application/json',
+          "X-KEY"       => self.jason_key,
+          "X-CLASS"     => self.class.name
+          #also want to add the eTag here!
+          #may also want to add any other indexable fields that the user specifies?
+      }
+      post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
+
+      if self.class.owned
+        #the parent object needs to be defined!
+        raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
+      end
+
+      post_headers["X-PARENT"] = self.jason_parent.jason_key if self.jason_parent
+      post_headers["X-LIST"] = self.jason_parent_list if self.jason_parent_list
+
+      url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
+
+      #puts "Saving to #{url}"
+      if method == :post
+        response = RestClient.post(url, payload, post_headers)
+      elsif method == :delete
+        response = RestClient.delete(url, post_headers)
+      else
+        raise "Unknown method '#{method.to_s}'"
+      end
+
+      if response.code == 201
+        #save successful!
+        #store the new eTag for this object
+        #puts response.raw_headers
+        #@__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
+      else
+        raise "#{method.to_s.upcase} failed! Could not persist changes"
+      end
+
+      @__jason_state = :stale
     end
 
   end

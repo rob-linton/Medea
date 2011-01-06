@@ -29,7 +29,7 @@ describe "JasonObject" do
     retrieved_user.name.should eq(@user.name)
   end
 
-  it "should track it's state" do
+  it "should track its state" do
     @user.jason_state.should eq(:new)
     @user.save!
     @user.name = "Freddy"
