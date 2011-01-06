@@ -79,7 +79,7 @@ module Medea
       @state = :prefetch
     end
 
-    def remove! member
+    def remove! member, cascade=false
       raise RuntimeError, "You can only remove an item if you are accessing this list from an object." unless @parent.is_a? JasonObject
       raise ArgumentError, "You can only remove #{@type.name} items from this collection!" unless member.is_a? @type
       raise ArgumentError, "This item (#{member.jason_key}) doesn't exist in the list you're trying to remove it from!" unless self.include? member
@@ -87,11 +87,11 @@ module Medea
       if @list_type == :value
         member.jason_parent = nil
         member.jason_parent_list = nil
-        member.save!
+        member.delete! if cascade
       elsif @list_type == :reference
 
         #send DELETE to JasonDB::db_auth_url/a_class.name/
-        url = "#{JasonDB::db_auth_url}#{@type.name}/#{@parent.jason_key}/#{@list_name}/#{member.jason_key}"
+        url = "#{JasonDB::db_auth_url}#{@parent.class.name}/#{@parent.jason_key}/#{@list_name}/#{member.jason_key}"
 
         response = RestClient.delete url
 

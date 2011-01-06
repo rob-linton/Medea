@@ -80,6 +80,11 @@ module Medea
       end
     end
 
+    def ==(other)
+      return false if not other.is_a? JasonObject
+      jason_key == other.jason_key
+    end
+
     #"flexihash" access interface
     def []=(key, value)
       @__jason_data ||= {}
@@ -219,7 +224,19 @@ module Medea
         @__jason_state = :stale
     end
 
-    def delete!
+    def delete! cascade=false
+      #TODO: Put this into some kind of async method or have JasonDB able to set flags on many records at once
+      #This will be REALLY REALLY slowww!
+      if cascade && (self.class.class_variable_defined? :@@lists)
+        @@lists.keys.each do |list_name|
+          #for each list that I have
+          list = send(list_name)
+          list.each do |item|
+            #remove each item from the list, deleting it if possible
+            list.remove! item, true
+          end
+        end
+      end
       url = "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
       response = RestClient.delete url
       raise "DELETE failed!" unless response.code == 201
