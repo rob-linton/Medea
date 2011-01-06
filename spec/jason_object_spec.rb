@@ -42,4 +42,14 @@ describe "JasonObject" do
     retrieved_user.name
     retrieved_user.jason_state.should eq(:stale)
   end
+
+  it "should not load deleted objects" do
+    u = User.new
+    u.name = "Michael"
+    u.save!
+    u.delete!
+    User.all.each do |usr|
+      usr.should_not eq(u)
+    end
+  end
 end

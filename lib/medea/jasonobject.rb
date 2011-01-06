@@ -24,7 +24,7 @@ module Medea
     #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
     #if mode is set to :eager, we create the JasonDeferredQuery, invoke it's execution and then return it
     def JasonObject.all(mode=:lazy)
-      JasonDeferredQuery.new :class => self, :filters => {:FILTER => {:HTTP_X_CLASS => self}}
+      JasonDeferredQuery.new :class => self, :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_CLASS => self}}
     end
 
     #returns the JasonObject by directly querying the URL
@@ -58,7 +58,7 @@ module Medea
     #the resolve method takes a key and returns the JasonObject that has that key
     #This is useful when you have the key, but not the class
     def JasonObject.resolve(key, mode=:lazy)
-      q = JasonDeferredQuery.new :filters => {:FILTER => {:HTTP_X_KEY => key}}
+      q = JasonDeferredQuery.new :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_KEY => key}}
       q.filters[:FILTER] ||= {}
       q.filters[:FILTER][:HTTP_X_KEY] = key
       resp = JSON.parse(RestClient.get(q.to_url))
