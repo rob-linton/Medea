@@ -113,8 +113,7 @@ module Medea
     def execute_query content=true
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
-      LOGGER.debug "Executing #{type.name} deferred query! (#{to_url})"
-
+      
       response = RestClient.get to_url
       result = JSON.parse(response)
       self.contents = []
