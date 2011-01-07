@@ -113,39 +113,29 @@ module Medea
     def execute_query content=true
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
-      begin
-        LOGGER.debug "Executing #{type.name} deferred query! (#{to_url})"
+      LOGGER.debug "Executing #{type.name} deferred query! (#{to_url})"
 
-        response = RestClient.get to_url
-        result = JSON.parse(response)
-        self.contents = []
-        #results are in a hash, their keys are just numbers
-        result.keys.each do |k|
-          if k =~ /^[0-9]+$/
-            #this is a result! get the key
-            item = type.new(result[k]["HTTP_X_KEY"], :lazy)
-            if content && result[k].has_key?("CONTENT") && result[k]["CONTENT"] != ""
-              item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
-              item.instance_variable_set(:@__jason_state, :stale)
-            end
-            if result[k].has_key?("HTTP_X_PARENT") && result[k]["HTTP_X_PARENT"] != ""
-              item.jason_parent_key = result[k]["HTTP_X_PARENT"]
-            end
-            self.contents << item
+      response = RestClient.get to_url
+      result = JSON.parse(response)
+      self.contents = []
+      #results are in a hash, their keys are just numbers
+      result.keys.each do |k|
+        if k =~ /^[0-9]+$/
+          #this is a result! get the key
+          item = type.new(result[k]["HTTP_X_KEY"], :lazy)
+          if content && result[k].has_key?("CONTENT") && result[k]["CONTENT"] != ""
+            item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
+            item.instance_variable_set(:@__jason_state, :stale)
           end
+          if result[k].has_key?("HTTP_X_PARENT") && result[k]["HTTP_X_PARENT"] != ""
+            item.jason_parent_key = result[k]["HTTP_X_PARENT"]
+          end
+          self.contents << item
         end
-
-        self.state = :postfetch
-        result
-      rescue
-        if response.code != 200
-          LOGGER.error "Query to #{to_url} failed to parse!"
-        else
-          LOGGER.error "Query to #{to_url} failed to get!"
-        end
-        
-        self.contents = []
       end
+
+      self.state = :postfetch
+      result
     end
   end
 end
