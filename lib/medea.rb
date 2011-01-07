@@ -8,4 +8,11 @@ module Medea
   require 'medea/jasondeferredquery'
   require 'medea/jasonlistproperty'
   require 'medea/jasondb'
+
+  if defined?(Rails)
+    LOGGER = Rails.logger
+  else
+    require 'medea/dummy_logger'
+    LOGGER = DummyLogger.new
+  end
 end

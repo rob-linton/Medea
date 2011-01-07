@@ -114,8 +114,10 @@ module Medea
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
       begin
-        #puts "   = Executing #{type.name} deferred query! (#{to_url})"
-        result = JSON.parse(RestClient.get to_url)
+        LOGGER.debug "Executing #{type.name} deferred query! (#{to_url})"
+
+        response = RestClient.get to_url
+        result = JSON.parse(response)
         self.contents = []
         #results are in a hash, their keys are just numbers
         result.keys.each do |k|
@@ -136,6 +138,12 @@ module Medea
         self.state = :postfetch
         result
       rescue
+        if response.code != 200
+          LOGGER.error "Query to #{to_url} failed to parse!"
+        else
+          LOGGER.error "Query to #{to_url} failed to get!"
+        end
+        
         self.contents = []
       end
     end
