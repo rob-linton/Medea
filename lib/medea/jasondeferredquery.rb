@@ -114,26 +114,33 @@ module Medea
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
       
-      response = RestClient.get to_url
-      result = JSON.parse(response)
-      self.contents = []
-      #results are in a hash, their keys are just numbers
-      result.keys.each do |k|
-        if k =~ /^[0-9]+$/
-          #this is a result! get the key
-          item = type.new(result[k]["HTTP_X_KEY"], :lazy)
-          if content && result[k].has_key?("CONTENT") && result[k]["CONTENT"] != ""
-            item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
-            item.instance_variable_set(:@__jason_state, :stale)
+      begin
+        response = RestClient.get to_url
+        result = JSON.parse(response)
+        self.contents = []
+        #results are in a hash, their keys are just numbers
+        result.keys.each do |k|
+          if k =~ /^[0-9]+$/
+            #this is a result! get the key
+            item = type.new(result[k]["HTTP_X_KEY"], :lazy)
+            if content && result[k].has_key?("CONTENT") && result[k]["CONTENT"] != ""
+              item.instance_variable_set(:@__jason_data, result[k]["CONTENT"])
+              item.instance_variable_set(:@__jason_state, :stale)
+            end
+            if result[k].has_key?("HTTP_X_PARENT") && result[k]["HTTP_X_PARENT"] != ""
+              item.jason_parent_key = result[k]["HTTP_X_PARENT"]
+            end
+            self.contents << item
           end
-          if result[k].has_key?("HTTP_X_PARENT") && result[k]["HTTP_X_PARENT"] != ""
-            item.jason_parent_key = result[k]["HTTP_X_PARENT"]
-          end
-          self.contents << item
         end
-      end
 
-      self.state = :postfetch
+        self.state = :postfetch
+      rescue JSON::ParserError
+        #we assume that a parser error means that there are no results, or a problem with the template
+        #(currently a problem with the template is causing a parser error when there's no results)
+        self.contents = []
+        self.state = :postfetch
+      end
       result
     end
   end
