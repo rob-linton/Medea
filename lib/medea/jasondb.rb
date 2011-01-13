@@ -24,3 +24,39 @@ module JasonDB
   end
 
 end
+
+module Medea
+  def Medea::setup_templates
+    template_dir = "templates"
+    name_pattern = /([A-Za-z]+)\.template/
+    headers = {:content_type => 'text/plain',
+               'X-VERSION' => TEMPLATE_VERSION}
+    curr_version = TEMPLATE_VERSION.split "."
+    Dir.glob(File.expand_path(File.join(template_dir, "*.template"))).select do |file|
+      #for each template, we need to post it to ..#{filename}:html_template
+      file =~ name_pattern
+      template_path = "#{JasonDB::db_auth_url}..#{$1}:html_template"
+
+      #but,check the version first...
+      begin
+        r = RestClient.get template_path
+        if r.code == 200 && r.headers[:http_x_version]
+          version = r.headers[:http_x_version].split(".")
+          version.each_index do |i|
+            if version[i] < curr_version[i]
+              RestClient.post template_path, File.read(file), headers
+              break
+            elsif version[i] > curr_version[i]
+              raise "The remote templates are newer than the local ones! Update your gem!"
+            end
+          end
+          next
+        end
+
+      rescue RestClient::ResourceNotFound
+        #do nothing, it just means that the templates aren't uploaded yet.
+      end
+      RestClient.post template_path, File.read(file), headers
+    end
+  end
+end

@@ -1,6 +1,7 @@
 
 module Medea
   require 'rubygems'
+  require 'medea/version'
   require 'medea/inheritable_attributes'
   require 'medea/active_model_methods'
   require 'medea/list_properties'
