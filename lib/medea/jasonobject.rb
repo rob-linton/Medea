@@ -8,6 +8,9 @@ module Medea
   class JasonObject
 
     include Medea::ActiveModelMethods
+    if defined? ActiveModel
+      extend ActiveModel::Naming
+    end
     #include JasonDB
 
     #meta-programming interface for lists
