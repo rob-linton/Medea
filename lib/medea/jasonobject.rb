@@ -199,6 +199,7 @@ module Medea
 
     def update_attributes attributes
       @__jason_data = sanitize attributes
+      @__jason_state = :dirty unless @__jason_state == :new
       save
     end
 
