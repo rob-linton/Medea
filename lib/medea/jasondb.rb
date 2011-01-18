@@ -26,16 +26,17 @@ module JasonDB
 end
 
 module Medea
-  def Medea::setup_templates
+  def Medea::setup_templates url=nil
     template_dir = "templates"
     name_pattern = /([A-Za-z]+)\.template/
     headers = {:content_type => 'text/plain',
                'X-VERSION' => TEMPLATE_VERSION}
     curr_version = TEMPLATE_VERSION.split "."
+    base_url = url ? url : JasonDB::db_auth_url
     Dir.glob(File.expand_path(File.join(template_dir, "*.template"))).select do |file|
       #for each template, we need to post it to ..#{filename}:html_template
       file =~ name_pattern
-      template_path = "#{JasonDB::db_auth_url}..#{$1}:html_template"
+      template_path = "#{base_url}..#{$1}:html_template"
 
       #but,check the version first...
       begin
