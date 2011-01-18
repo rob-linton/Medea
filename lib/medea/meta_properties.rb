@@ -1,9 +1,9 @@
-module JasonObjectListProperties
+module JasonObjectMetaProperties
   def self.included(base)
-    base.extend(MetaListProperties)
+    base.extend(MetaProperties)
   end
   
-  module MetaListProperties
+  module MetaProperties
     def create_member_list list_name, list_class, list_type
       list = {}
       list = self.send(:class_variable_get, :@@lists) if self.class_variable_defined? :@@lists
@@ -26,6 +26,11 @@ module JasonObjectListProperties
       #also modify the items in the list so that they know that they're owned
       #list_type.class_variable_set :@@owner, self
       list_class.owned = true
+    end
+
+    def key_field field_name
+      #this field must be present to save, and it must be unique
+      self.send(:class_variable_set, :@@key_field, field_name)
     end
   end
 end

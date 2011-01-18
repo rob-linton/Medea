@@ -52,4 +52,33 @@ describe "JasonObject" do
       usr.should_not eq(u)
     end
   end
+
+  it "should be initialisable with a hash" do
+    @user = User.new({:name => "Jimmy", :age => 31})
+    @user.name.should eq("Jimmy")
+    @user.age.should eq(31)
+  end
+
+  it "should be updateable with update_attributes" do
+
+    field_hash = {:name => "Robert",
+                  :age => 25}
+    @user.name = "Fred"
+    @user.age = 20
+
+    @user.stub(:save).and_return true
+    @user.should_receive :save
+    (@user.update_attributes field_hash).should eq(true)
+
+    @user.name.should eq(field_hash[:name])
+    @user.age.should eq(field_hash[:age])
+  end
+
+  it "should pass the result of save back through update_attributes" do
+    @user.stub(:save).and_return true
+    (@user.update_attributes({})).should eq(true)
+
+    @user.stub(:save).and_return false
+    (@user.update_attributes({})).should eq(false)
+  end
 end

@@ -15,7 +15,7 @@ module Medea
     inheritable_attributes :owned
     @owned = false
 
-    include JasonObjectListProperties
+    include JasonObjectMetaProperties
 
     #end meta
 
@@ -113,13 +113,31 @@ module Medea
     end
     #end "flexihash" access
 
-    def initialize key = nil, mode = :eager
-      if key
-        @__id = key
-        if mode == :eager
-          load
+    def sanitize hash
+      #remove the keys in hash that aren't allowed
+      forbidden_keys = ["jason_key",
+                        "jason_state",
+                        "jason_parent",
+                        "jason_parent_key",
+                        "jason_parent_list"]
+      hash.delete_if { |k,v| forbidden_keys.include? k }
+      result = {}
+      hash.each { |k, v| result[k.to_s] = v }
+      result
+    end
+
+    def initialize initialiser = nil, mode = :eager
+      if initialiser
+        if initialiser.is_a? Hash
+          @__jason_state = :new
+          @__jason_data = sanitize initialiser
         else
-          @__jason_state = :ghost
+          @__id = initialiser
+          if mode == :eager
+            load
+          else
+            @__jason_state = :ghost
+          end
         end
       else
         @__jason_state = :new
@@ -179,8 +197,22 @@ module Medea
 
     #object persistence methods
 
+    def update_attributes attributes
+      @__jason_data = sanitize attributes
+      save
+    end
+
     #POSTs the current values of this object back to JasonDB
     #on successful post, sets state to STALE and updates eTag
+    def save
+      return false if @__jason_state == :stale or @__jason_state == :ghost
+      begin
+        save!
+        return true
+      rescue
+        return false
+      end
+    end
     def save!
         #no changes? no save!
         return if @__jason_state == :stale or @__jason_state == :ghost
