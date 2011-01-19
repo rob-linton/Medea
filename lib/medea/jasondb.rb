@@ -27,7 +27,7 @@ end
 
 module Medea
   def Medea::setup_templates url=nil
-    template_dir = "templates"
+    template_dir = File.expand_path("./templates", File.dirname(__FILE__))
     name_pattern = /([A-Za-z]+)\.template/
     headers = {:content_type => 'text/plain',
                'X-VERSION' => TEMPLATE_VERSION}
