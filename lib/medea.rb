@@ -5,6 +5,7 @@ module Medea
   require 'medea/inheritable_attributes'
   require 'medea/active_model_methods'
   require 'medea/meta_properties'
+  require 'medea/jason_base'
   require 'medea/jasonobject'
   require 'medea/jasondeferredquery'
   require 'medea/jasonlistproperty'
