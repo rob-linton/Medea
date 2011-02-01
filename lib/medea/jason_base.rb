@@ -88,24 +88,6 @@ module Medea
       @__jason_parent_list = value
     end
 
-    #POSTs the current values of this object back to JasonDB
-    #on successful post, sets state to STALE and updates eTag
-    def save
-      return false if @__jason_state == :stale or @__jason_state == :ghost
-      begin
-        save!
-        return true
-      rescue
-        return false
-      end
-    end
-    def save!
-        #no changes? no save!
-        return if @__jason_state == :stale or @__jason_state == :ghost
-
-        persist_changes :post
-    end
-
     def delete! cascade=false
       #TODO: Put this into some kind of async method or have JasonDB able to set flags on many records at once
       #This will be REALLY REALLY slowww!
@@ -147,47 +129,6 @@ module Medea
       @__jason_state = :stale
     end
 
-    def persist_changes method = :post
-      payload = self.serialise
 
-      post_headers = {
-          :content_type => 'application/json',
-          "X-KEY"       => self.jason_key,
-          "X-CLASS"     => self.class.name
-          #also want to add the eTag here!
-          #may also want to add any other indexable fields that the user specifies?
-      }
-      post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
-
-      if self.class.owned
-        #the parent object needs to be defined!
-        raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
-      end
-
-      post_headers["X-PARENT"] = self.jason_parent.jason_key if self.jason_parent
-      post_headers["X-LIST"] = self.jason_parent_list if self.jason_parent_list
-
-      url = JasonDB::db_auth_url + self.class.name + "/" + self.jason_key
-
-      #puts "Saving to #{url}"
-      if method == :post
-        response = RestClient.post(url, payload, post_headers)
-      elsif method == :delete
-        response = RestClient.delete(url, post_headers)
-      else
-        raise "Unknown method '#{method.to_s}'"
-      end
-
-      if response.code == 201
-        #save successful!
-        #store the new eTag for this object
-        #puts response.raw_headers
-        #@__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
-      else
-        raise "#{method.to_s.upcase} failed! Could not persist changes"
-      end
-
-      @__jason_state = :stale
-    end
   end
 end

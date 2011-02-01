@@ -13,7 +13,7 @@ module Medea
     end
 
     include JasonObjectMetaProperties
-
+    attr_accessor :attachments
     #end meta
 
     #Here we're going to put the "query" interface
@@ -48,6 +48,10 @@ module Medea
 
     #"flexihash" access interface
     def []=(key, value)
+      if @attachments.keys.include? key.to_sym
+        @attachments[key.to_sym] = Medea::JasonBlob.new({:parent => self, :name => key, :content => value})
+        return
+      end
       @__jason_data ||= {}
       @__jason_state = :dirty if jason_state == :stale
 
@@ -55,6 +59,14 @@ module Medea
     end
 
     def [](key)
+      if @attachments.keys.include? key.to_sym
+        if not @attachments[key.to_sym]
+          #retrieve the JasonBlob for this key
+          @attachments[key.to_sym] = Medea::JasonBlob.new({:parent => self, :name => key})
+        end
+
+        return @attachments[key.to_sym].contents
+      end
       @__jason_data[key]
     end
 
@@ -88,6 +100,13 @@ module Medea
     end
 
     def initialize initialiser = nil, mode = :eager
+      @attachments = {}
+      if self.class.class_variable_defined? :@@attachments
+        (self.class.class_variable_get :@@attachments).each do |k|
+          @attachments[k] = nil
+        end
+      end
+
       if initialiser
         if initialiser.is_a? Hash
           @__jason_state = :new
@@ -121,6 +140,78 @@ module Medea
       @__jason_data = sanitize attributes
       @__jason_state = :dirty unless @__jason_state == :new
       save
+    end
+
+    #POSTs the current values of this object back to JasonDB
+    #on successful post, sets state to STALE and updates eTag
+    def save
+      return false if @__jason_state == :stale or @__jason_state == :ghost
+      begin
+        save!
+        return true
+      rescue
+        return false
+      end
+    end
+    
+    def save!
+        @attachments.each do |k, v|
+          if v
+            v.save!
+          end
+        end
+
+        #no changes? no save!
+        return if @__jason_state == :stale or @__jason_state == :ghost
+
+        persist_changes :post
+    end
+
+    def to_url
+      "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
+    end
+
+    def persist_changes method = :post
+      payload = self.serialise
+
+      post_headers = {
+          :content_type => 'application/json',
+          "X-KEY"       => self.jason_key,
+          "X-CLASS"     => self.class.name
+          #also want to add the eTag here!
+          #may also want to add any other indexable fields that the user specifies?
+      }
+      post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
+
+      if self.class.owned
+        #the parent object needs to be defined!
+        raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
+      end
+
+      post_headers["X-PARENT"] = self.jason_parent.jason_key if self.jason_parent
+      post_headers["X-LIST"] = self.jason_parent_list if self.jason_parent_list
+
+      url = to_url()
+
+      #puts "Saving to #{url}"
+      if method == :post
+        response = RestClient.post(url, payload, post_headers)
+      elsif method == :delete
+        response = RestClient.delete(url, post_headers)
+      else
+        raise "Unknown method '#{method.to_s}'"
+      end
+
+      if response.code == 201
+        #save successful!
+        #store the new eTag for this object
+        #puts response.raw_headers
+        #@__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
+      else
+        raise "#{method.to_s.upcase} failed! Could not persist changes"
+      end
+
+      @__jason_state = :stale
     end
 
     #end object persistence

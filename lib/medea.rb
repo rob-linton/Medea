@@ -6,6 +6,7 @@ module Medea
   require 'medea/active_model_methods'
   require 'medea/meta_properties'
   require 'medea/jason_base'
+  require 'medea/jason_blob'
   require 'medea/jasonobject'
   require 'medea/jasondeferredquery'
   require 'medea/jasonlistproperty'

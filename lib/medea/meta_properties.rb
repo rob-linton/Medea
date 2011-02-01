@@ -28,6 +28,14 @@ module JasonObjectMetaProperties
       list_class.owned = true
     end
 
+    def has_attachment attachment_name
+      attachments = []
+      attachments = self.send(:class_variable_get, :@@attachments) if self.class_variable_defined? :@@attachments
+      attachments << attachment_name
+      attachments.uniq!
+      self.send(:class_variable_set, "@@attachments", attachments)
+    end
+
     def key_field field_name
       #this field must be present to save, and it must be unique
       self.send(:class_variable_set, :@@key_field, field_name)
