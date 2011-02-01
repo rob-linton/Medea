@@ -65,7 +65,7 @@ module Medea
           @attachments[key.to_sym] = Medea::JasonBlob.new({:parent => self, :name => key})
         end
 
-        return @attachments[key.to_sym].contents
+        return @attachments[key.to_sym]
       end
       @__jason_data[key]
     end
