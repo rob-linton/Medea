@@ -18,14 +18,14 @@ describe "Jason Blob" do
     @update.avatar = "Here's some text!"
     @update.save!
     u2 = Update.get_by_key(@update.jason_key)
-    u2.avatar.should eq("Here's some text!")
-    u2.avatar.size.should eq("Here's some text!".size)
+    u2.avatar.contents.should eq("Here's some text!")
+    u2.avatar.contents.size.should eq("Here's some text!".size)
   end
 
   it "should work for larger images" do
     f = File.new("./spec/test.jpg", "r")
     @update.avatar = f
     @update.save!
-    Update.get_by_key(@update.jason_key).avatar.size.should eq(f.size)
+    Update.get_by_key(@update.jason_key).avatar.contents.size.should eq(f.size)
   end
 end
