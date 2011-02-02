@@ -101,6 +101,7 @@ module Medea
       resp = RestClient.post to_url, contents, post_headers
 
       if resp.code == 201
+        @__jason_state = :stale
         true
       else
         false
