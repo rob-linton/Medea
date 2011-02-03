@@ -153,6 +153,9 @@ module Medea
             if result[k].has_key?("HTTP_X_PARENT") && result[k]["HTTP_X_PARENT"] != ""
               item.jason_parent_key = result[k]["HTTP_X_PARENT"]
             end
+            if result[k].has_key?("TIMESTAMP")
+              item.instance_variable_set :@__jason_timestamp, result[k]["TIMESTAMP"]
+            end
             self.contents << item
           end
         end

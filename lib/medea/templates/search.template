@@ -15,13 +15,14 @@
 			"RELATIVE_VERSION":"[%RELATIVE_VERSION%]",
 			"RECID":"[%RECID%]",
 			"RECNO":"[%RECNO%]",
+			"TIMESTAMP":"[%TIMESTAMP%]",
 			"ETag":"[%ETag%]",
 			"HTTP_X_SCHEMA":"[%HTTP_X_SCHEMA%]",
 			"HTTP_X_GENERATED_PASSWORD":"[%HTTP_X_GENERATED_PASSWORD%]",
-            "HTTP_X_CLASS":"[%HTTP_X_CLASS%]",
-            "HTTP_X_LIST":"[%HTTP_X_LIST%]",
-            "HTTP_X_KEY":"[%HTTP_X_KEY%]",
-            "HTTP_X_PARENT":"[%HTTP_X_PARENT%]",
+      "HTTP_X_CLASS":"[%HTTP_X_CLASS%]",
+      "HTTP_X_LIST":"[%HTTP_X_LIST%]",
+      "HTTP_X_KEY":"[%HTTP_X_KEY%]",
+      "HTTP_X_PARENT":"[%HTTP_X_PARENT%]",
 			"CONTENT":[%CONTENT%]
 		}[%COMMA%]
 	%item%-->

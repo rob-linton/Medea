@@ -5,13 +5,6 @@ module Medea
     inheritable_attributes :owned
     @owned = false
 
-    
-    #returns the JasonObject by directly querying the URL
-    #if mode is :lazy, we return a GHOST, if mode is :eager, we return a STALE JasonObject
-    def self.get_by_key(key, mode=:eager)
-      return self.new key, mode
-    end
-
     #the resolve method takes a key and returns the JasonObject that has that key
     #This is useful when you have the key, but not the class
     def self.resolve(key, mode=:lazy)
@@ -88,6 +81,10 @@ module Medea
       @__jason_parent_list = value
     end
 
+    def jason_timestamp
+      @__jason_timestamp
+    end
+
     def delete! cascade=false
       #TODO: Put this into some kind of async method or have JasonDB able to set flags on many records at once
       #This will be REALLY REALLY slowww!
@@ -121,11 +118,12 @@ module Medea
     def load_from_jasondb
       #because this object might be owned by another, we need to search by key.
       #not passing a format to the query is a shortcut to getting just the object.
-      url = build_url()
+      url = to_url
       
       response = RestClient.get url
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]
+      @__jason_timestamp = response.headers[:timestamp]
       @__jason_state = :stale
     end
 

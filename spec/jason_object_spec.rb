@@ -81,4 +81,15 @@ describe "JasonObject" do
     @user.stub(:save).and_return false
     (@user.update_attributes({})).should eq(false)
   end
+
+  it "should provide access to its timestamp from JasonDB" do
+    @user.save!
+    @user.jason_timestamp.should_not be_nil
+    t = @user.jason_timestamp
+    @user.name = "Smithy"
+    @user.save!
+    user2 = User.get_by_key(@user.jason_key)
+    user2.jason_timestamp.should_not be_nil
+    user2.jason_timestamp.should be > t
+  end
 end

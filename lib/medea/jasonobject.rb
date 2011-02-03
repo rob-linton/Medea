@@ -51,6 +51,12 @@ module Medea
     end
     #end query interface
 
+    #returns the JasonObject by directly querying the URL
+    #if mode is :lazy, we return a GHOST, if mode is :eager, we return a STALE JasonObject
+    def self.get_by_key(key, mode=:eager)
+      return self.new key, mode
+    end
+
     #"flexihash" access interface
     def []=(key, value)
       if @attachments.keys.include? key.to_sym
@@ -211,7 +217,8 @@ module Medea
         #save successful!
         #store the new eTag for this object
         #puts response.raw_headers
-        #@__jason_etag = response.headers[:location] + ":" + response.headers[:content_md5]
+        @__jason_etag = response.headers[:Etag]
+        @__jason_timestamp = response.headers[:timestamp]
       else
         raise "#{method.to_s.upcase} failed! Could not persist changes"
       end
