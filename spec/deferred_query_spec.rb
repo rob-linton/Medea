@@ -33,4 +33,14 @@ describe "Deferred Query" do
   end
 
   it "should be able to fetch those since a particular time"
+
+  it "should return the last element" do
+    u = User.all
+    u.last.should eq(u[-1])
+  end
+
+  it "should return the first element" do
+    u = User.all
+    u.first.should eq(u[0])
+  end
 end

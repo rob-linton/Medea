@@ -123,6 +123,14 @@ module Medea
       end
       false
     end
+
+    def last
+      self[-1]
+    end
+
+    def first
+      self[0]
+    end
     #end array interface
 
     def execute_query content=true
