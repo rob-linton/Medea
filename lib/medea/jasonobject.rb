@@ -20,8 +20,13 @@ module Medea
 
     #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
     #if mode is set to :eager, we create the JasonDeferredQuery, invoke it's execution and then return it
-    def JasonObject.all(mode=:lazy)
-      JasonDeferredQuery.new :class => self, :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_CLASS => self, :HTTP_X_ACTION => :POST}}
+    def JasonObject.all(opts=nil)
+      q = JasonDeferredQuery.new :class => self, :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_CLASS => self, :HTTP_X_ACTION => :POST}}
+      if opts && opts[:limit]
+        q.limit = opts[:limit]
+      end
+
+      q
     end
 
     #here we will capture:

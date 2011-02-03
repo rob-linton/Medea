@@ -49,6 +49,19 @@ module Medea
       #return self, so that we can chain up query refinements
       self
     end
+
+    def limit n
+      self.filters[:TOP] = n
+    end
+
+    def limit= n
+      limit n
+    end
+
+    #synonym for limit
+    def top n
+      limit n
+    end
     #end query interface
 
     def add_data_filter property, value
@@ -78,6 +91,8 @@ module Medea
                 filter_array << URI.escape("#{name.to_s}=#{field.to_s}:#{value.to_s}", unsafe)
               end
             end
+          else
+            filter_array << URI.escape("#{name.to_s}=#{val.to_s}", unsafe)
           end
         end
       end
