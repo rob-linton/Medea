@@ -1,3 +1,4 @@
+
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
 require "medea/version"
@@ -20,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency "json"
   s.add_dependency "rest-client"
   s.add_dependency "uuidtools"
+  s.add_dependency "pr_geohash"
 
   s.add_development_dependency "rspec"
 end

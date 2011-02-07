@@ -1,4 +1,4 @@
 source "http://rubygems.org"
 
-# Dependencies are specified in medea.gemspec  
+# All dependencies are specified in medea.gemspec
 gemspec

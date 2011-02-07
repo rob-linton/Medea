@@ -7,13 +7,21 @@ class Message < Medea::JasonObject
 end
 
 class User < Medea::JasonObject
+  has_location
   has_many :followees, User
   owns_many :messages, Message
 end
 
-#mock the db url
-module JasonDB
-  def JasonDB::db_auth_url mode=:secure
-    "https://michael:password@rest.jasondb.com/medea-test/"
+class DummyResponse
+  def code
+    201
+  end
+  def headers
+    {:Etag => "sometag",
+     :timestamp => "12345678"}
   end
 end
+
+ENV["jason_user"] = "michael"
+ENV["jason_topic"] = "medea-test"
+ENV["jason_password"] = "password"

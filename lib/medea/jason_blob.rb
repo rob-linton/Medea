@@ -26,8 +26,12 @@ module Medea
       end
     end
 
-    def to_url
-      "#{@parent.to_url}/#{@attachment_name}"
+    def to_url mode=:secure
+      "#{@parent.to_url mode}/#{@attachment_name}"
+    end
+
+    def to_public_url
+      to_url :public
     end
 
     def load_from_jasondb

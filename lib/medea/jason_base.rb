@@ -124,6 +124,9 @@ module Medea
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]
       @__jason_timestamp = response.headers[:timestamp]
+      if response.headers[:http_x_public]
+        @public = response.headers[:http_x_public].split(",")
+      end
       @__jason_state = :stale
     end
 

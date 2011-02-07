@@ -19,8 +19,12 @@ module JasonDB
       host = "rest.jasondb.com"
     end
     protocol = "http"
-    protocol << "s" if mode == :secure
-    "#{protocol}://#{user}:#{password}@#{host}/#{topic}/"
+    if mode == :secure
+      protocol << "s"
+      "#{protocol}://#{user}:#{password}@#{host}/#{topic}/"
+    else #mode == :public
+      "#{protocol}://#{host}/#{topic}/"
+    end
   end
 
 end

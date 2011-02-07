@@ -92,4 +92,49 @@ describe "JasonObject" do
     user2.jason_timestamp.should_not be_nil
     user2.jason_timestamp.should be > t
   end
+
+  it "should post location information properly" do
+    @user.geohash = "r1r0rshvpuxg"
+    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-GEOHASH" => "r1r0rshvpuxg")).and_return(DummyResponse.new)
+    @user.save!
+    @user.latitude, @user.longitude = [-37.901949, 145.180206]
+    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-LATITUDE" => -37.901949,
+                                                                                 "X-LONGITUDE" => 145.180206)).and_return(DummyResponse.new)
+    @user.save!
+  end
+
+  it "should load location information properly" do
+    @user.geohash = "r1r0rshvpuxg"
+    @user.latitude, @user.longitude = [-37.901949, 145.180206]
+    @user.save!
+    retrieved_user = User.get_by_key(@user.jason_key)
+    retrieved_user.geohash.should eq(@user.geohash)
+    retrieved_user.latitude.should eq(@user.latitude)
+    retrieved_user.longitude.should eq(@user.longitude)
+  end
+
+  it "should provide it's public (insecure) url" do
+    #should return url non-https, and with no user/password
+    (@user.to_url :public).should match(/http:\/\/rest.jasondb.com/)
+    @user.to_public_url.should eq(@user.to_url :public)
+  end
+
+  it "should post security information properly" do
+    @user.add_public :GET, :POST
+    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-PUBLIC" => "GET,POST")).and_return(DummyResponse.new)
+    @user.save!
+  end
+
+  it "should only post valid verbs" do
+    @user.add_public :GET, :FAKEVERB
+    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-PUBLIC" => "GET")).and_return(DummyResponse.new)
+    @user.save!
+  end
+
+  it "should load security information properly" do
+    @user.set_public :GET, :POST
+    @user.save!
+    retrieved_user = User.get_by_key @user.jason_key
+    (retrieved_user.send(:instance_variable_get, :@public)).should eq(["GET", "POST"])
+  end
 end

@@ -7,6 +7,9 @@ module Medea
 
   class JasonObject < JasonBase
 
+    #these verbs are able to be made public
+    HTTP_VERBS = [:GET, :POST, :PUT, :DELETE]
+
     include Medea::ActiveModelMethods
     if defined? ActiveModel
       extend ActiveModel::Naming
@@ -18,8 +21,7 @@ module Medea
 
     #Here we're going to put the "query" interface
 
-    #create a JasonDeferredQuery with no conditions, other than HTTP_X_CLASS=self.name
-    #if mode is set to :eager, we create the JasonDeferredQuery, invoke it's execution and then return it
+    #create a JasonDeferredQuery for all records of this class & with some optional conditions
     def JasonObject.all(opts=nil)
       q = JasonDeferredQuery.new :class => self, :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_CLASS => self, :HTTP_X_ACTION => :POST}}
       if opts && opts[:limit]
@@ -112,10 +114,15 @@ module Medea
 
     def initialize initialiser = nil, mode = :eager
       @attachments = {}
-      if self.class.class_variable_defined? :@@attachments
-        (self.class.class_variable_get :@@attachments).each do |k|
+      if opts[:attachments]
+        opts[:attachments].each do |k|
           @attachments[k] = nil
         end
+      end
+
+      @public = []
+      if opts[:public]
+        opts[:public].each {|i| @public << i}
       end
 
       if initialiser
@@ -175,11 +182,45 @@ module Medea
         #no changes? no save!
         return if @__jason_state == :stale or @__jason_state == :ghost
 
+        #validations
+        if self.class.owned
+          #the parent object needs to be defined!
+          raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
+        end
+
         persist_changes :post
     end
 
-    def to_url
-      "#{JasonDB::db_auth_url}#{self.class.name}/#{self.jason_key}"
+    def add_public *args
+      args.reject! do |i|
+        not HTTP_VERBS.include? i
+      end
+      @public += args
+      @public.uniq!
+    end
+
+    def remove_public *args
+      args.reject! do |i|
+        not HTTP_VERBS.include? i
+      end
+      @public -= args
+      @public.uniq!
+    end
+
+    def set_public *args
+      args.reject! do |i|
+        not HTTP_VERBS.include? i
+      end
+      @public = args
+      @public.uniq!
+    end
+
+    def to_url mode=:secure
+      "#{JasonDB::db_auth_url mode}#{self.class.name}/#{self.jason_key}"
+    end
+
+    def to_public_url
+      to_url :public
     end
 
     def persist_changes method = :post
@@ -194,13 +235,23 @@ module Medea
       }
       post_headers["IF-MATCH"] = @__jason_etag if @__jason_state == :dirty
 
-      if self.class.owned
-        #the parent object needs to be defined!
-        raise "#{self.class.name} cannot be saved without setting a parent and list!" unless self.jason_parent && self.jason_parent_list
-      end
-
       post_headers["X-PARENT"] = self.jason_parent.jason_key if self.jason_parent
       post_headers["X-LIST"] = self.jason_parent_list if self.jason_parent_list
+
+      if opts[:located]
+        #set the location headers
+        if geohash?
+          post_headers["X-GEOHASH"] = geohash
+        end
+        if latitude? && longitude?
+          post_headers["X-LATITUDE"] = latitude
+          post_headers["X-LONGITUDE"] = longitude
+        end
+      end
+
+      if @public.any?
+        post_headers["X-PUBLIC"] = @public.join(",")
+      end
 
       url = to_url()
 
@@ -227,5 +278,14 @@ module Medea
     end
 
     #end object persistence
+
+    private
+    def opts
+      if self.class.class_variable_defined? :@@opts
+        self.class.class_variable_get :@@opts
+      else
+        {}
+      end
+    end
   end
 end

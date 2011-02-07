@@ -23,9 +23,10 @@ module Medea
 
     def method_missing name, *args, &block
       #is this a list property on the base class?
-      if (@type.class_variable_defined? :@@lists) && (@type.send(:class_variable_get, :@@lists).has_key? name)
+      lists = @type.class_variable_defined?(:@@opts) ? (@type.class_variable_get :@@opts)[:lists] : nil
+      if lists && lists.has_key?(name)
         #if so, we'll just return a new ListProperty with my query as the parent
-        new_list_class, new_list_type = @type.send(:class_variable_get, :@@lists)[name]
+        new_list_class, new_list_type = lists[name]
         base_query = self.clone
         base_query.result_format = :keylist
         JasonListProperty.new base_query, name.to_sym, new_list_class, new_list_type
