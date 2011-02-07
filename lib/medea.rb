@@ -1,7 +1,6 @@
 
 module Medea
   require 'rubygems'
-  require 'pr_geohash'
   require 'medea/version'
   require 'medea/inheritable_attributes'
   require 'medea/active_model_methods'
