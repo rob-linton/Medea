@@ -62,6 +62,14 @@ module Medea
     def top n
       limit n
     end
+
+    def since t
+      self.filters[:SINCE] = t
+    end
+
+    def since= t
+      since t
+    end
     #end query interface
 
     def add_data_filter property, value

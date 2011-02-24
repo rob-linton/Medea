@@ -24,8 +24,9 @@ module Medea
     #create a JasonDeferredQuery for all records of this class & with some optional conditions
     def JasonObject.all(opts=nil)
       q = JasonDeferredQuery.new :class => self, :filters => {:VERSION0 => nil, :FILTER => {:HTTP_X_CLASS => self, :HTTP_X_ACTION => :POST}}
-      if opts && opts[:limit]
-        q.limit = opts[:limit]
+      if opts
+        q.limit = opts[:limit] if opts[:limit]
+        q.since = opts[:since] if opts[:since]          
       end
 
       q

@@ -82,7 +82,7 @@ module Medea
     end
 
     def remove! member, cascade=false
-      raise RuntimeError, "You can only remove an item if you are accessing this list from an object." unless @parent.is_a? JasonObject
+      raise RuntimeError, "You can only remove an item if you are accessing this list from an object (ie, not another list)." unless @parent.is_a? JasonObject
       raise ArgumentError, "You can only remove #{@type.name} items from this collection!" unless member.is_a? @type
       raise ArgumentError, "This item (#{member.jason_key}) doesn't exist in the list you're trying to remove it from!" unless self.include? member
       
