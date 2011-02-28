@@ -121,13 +121,13 @@ describe "JasonObject" do
 
   it "should post security information properly" do
     @user.add_public :GET, :POST
-    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-PUBLIC" => "GET,POST")).and_return(DummyResponse.new)
+    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-PERMISSIONS" => "{PUBLIC:[GET,POST]}")).and_return(DummyResponse.new)
     @user.save!
   end
 
   it "should only post valid verbs" do
     @user.add_public :GET, :FAKEVERB
-    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-PUBLIC" => "GET")).and_return(DummyResponse.new)
+    RestClient.should_receive(:post).with(anything(), anything(), hash_including("X-PERMISSIONS" => "{PUBLIC:[GET]}")).and_return(DummyResponse.new)
     @user.save!
   end
 
@@ -135,6 +135,6 @@ describe "JasonObject" do
     @user.set_public :GET, :POST
     @user.save!
     retrieved_user = User.get_by_key @user.jason_key
-    (retrieved_user.send(:instance_variable_get, :@public)).should eq(["GET", "POST"])
+    retrieved_user.get_public.should eq(["GET", "POST"])
   end
 end

@@ -33,7 +33,7 @@ describe "Deferred Query" do
   end
 
   it "should be able to fetch those since a particular time" do
-    u = User.all[10]
+    u = User.all[User.all.count - 1]
     User.all(:since => u.jason_timestamp).each do |i|
       i.jason_timestamp.should be >= u.jason_timestamp
     end

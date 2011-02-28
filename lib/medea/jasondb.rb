@@ -23,7 +23,8 @@ module JasonDB
       protocol << "s"
       "#{protocol}://#{user}:#{password}@#{host}/#{topic}/"
     else #mode == :public
-      "#{protocol}://#{host}/#{topic}/"
+      #TODO Remove the dummy "a:a" here...
+      "#{protocol}://a:a@#{host}/#{topic}/"
     end
   end
 

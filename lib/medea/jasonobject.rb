@@ -5,10 +5,7 @@ module Medea
   require 'json'
   require 'uuidtools'
 
-  class JasonObject < JasonBase
-
-    #these verbs are able to be made public
-    HTTP_VERBS = [:GET, :POST, :PUT, :DELETE]
+  class JasonObject < Medea::JasonBase
 
     include Medea::ActiveModelMethods
     if defined? ActiveModel
@@ -192,30 +189,6 @@ module Medea
         persist_changes :post
     end
 
-    def add_public *args
-      args.reject! do |i|
-        not HTTP_VERBS.include? i
-      end
-      @public += args
-      @public.uniq!
-    end
-
-    def remove_public *args
-      args.reject! do |i|
-        not HTTP_VERBS.include? i
-      end
-      @public -= args
-      @public.uniq!
-    end
-
-    def set_public *args
-      args.reject! do |i|
-        not HTTP_VERBS.include? i
-      end
-      @public = args
-      @public.uniq!
-    end
-
     def to_url mode=:secure
       "#{JasonDB::db_auth_url mode}#{self.class.name}/#{self.jason_key}"
     end
@@ -250,9 +223,7 @@ module Medea
         end
       end
 
-      if @public.any?
-        post_headers["X-PUBLIC"] = @public.join(",")
-      end
+      post_headers.merge! permissions_header
 
       url = to_url()
 
@@ -280,13 +251,6 @@ module Medea
 
     #end object persistence
 
-    private
-    def opts
-      if self.class.class_variable_defined? :@@opts
-        self.class.class_variable_get :@@opts
-      else
-        {}
-      end
-    end
+
   end
 end

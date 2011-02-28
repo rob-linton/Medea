@@ -1,8 +1,14 @@
 module Medea
-  class JasonBlob < JasonBase
+  class JasonBlob < Medea::JasonBase
     attr_accessor :parent, :attachment_name
 
     def initialize initialiser=nil, mode=:eager
+
+      @public = []
+      if opts[:public]
+        opts[:public].each {|i| @public << i}
+      end
+
       if initialiser
         if initialiser.is_a? Hash
           @parent = initialiser[:parent]
@@ -101,6 +107,8 @@ module Medea
           #also want to add the eTag here!
           #may also want to add any other indexable fields that the user specifies?
       }
+
+      post_headers.merge! permissions_header
 
       resp = RestClient.post to_url, contents, post_headers
 

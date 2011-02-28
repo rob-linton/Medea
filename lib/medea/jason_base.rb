@@ -2,8 +2,11 @@ module Medea
   class JasonBase
     #meta-programming interface for lists
     include ClassLevelInheritableAttributes
-    inheritable_attributes :owned
+    inheritable_attributes :owned, :public
     @owned = false
+
+    #these verbs are able to be made public
+    HTTP_VERBS = [:GET, :POST, :PUT, :DELETE]
 
     #the resolve method takes a key and returns the JasonObject that has that key
     #This is useful when you have the key, but not the class
@@ -27,6 +30,13 @@ module Medea
         rescue
           nil
         end
+      end
+    end
+
+    def initialize
+      @public = []
+      if opts[:public]
+        opts[:public].each {|i| @public << i}
       end
     end
 
@@ -124,12 +134,72 @@ module Medea
       @__jason_data = JSON.parse response
       @__jason_etag = response.headers[:etag]
       @__jason_timestamp = response.headers[:timestamp]
-      if response.headers[:http_x_public]
-        @public = response.headers[:http_x_public].split(",")
+      if response.headers[:http_x_permissions]
+        @public = []
+        response.headers[:http_x_permissions].match /PUBLIC:\[([A-Z]+)(,[A-Z]+)*\]/ do |m|
+          m.captures.each do |c|
+            @public << c.slice(/[A-Z]+/)
+          end
+        end
       end
       @__jason_state = :stale
     end
 
+    def add_public *args
+      args.reject! do |i|
+        not HTTP_VERBS.include? i
+      end
+      args.uniq!
+      @public += args
+      @public.uniq!
+      @__jason_state = :dirty unless args.empty?
+    end
 
+    def remove_public *args
+      args.reject! do |i|
+        not HTTP_VERBS.include? i
+      end
+      @public -= args
+      @public.uniq!
+      @__jason_state = :dirty unless args.empty?
+    end
+
+    def set_public *args
+      args.reject! do |i|
+        not HTTP_VERBS.include? i
+      end
+      args.uniq!
+      @__jason_state = :dirty unless args.sort == @public.sort
+      @public = args
+    end
+
+    def get_public
+      @public
+    end
+
+    def permissions_header
+      permissions = {}
+      if self.get_public.any?
+        permissions["PUBLIC"] = self.get_public.join(",")
+      end
+
+      result = []
+      
+      permissions.each do |k, v|
+        result << "#{k}:[#{v}]"
+      end
+
+      {"X-PERMISSIONS" => "{#{result.join ","}}"}
+    end
+
+    private
+    def opts
+      if self.class.class_variable_defined? :@@opts
+        self.class.class_variable_get :@@opts
+      else
+        {}
+      end
+    end
+    
   end
 end

@@ -1,5 +1,5 @@
 module Medea
-  VERSION = "0.6.9"
+  VERSION = "0.7.0"
 
   #When the templates are changed, this version should be incremented
   #This version is used when uploading/updating the templates
