@@ -33,7 +33,7 @@ end
 module Medea
   def Medea::setup_templates url=nil
     template_dir = File.expand_path("./templates", File.dirname(__FILE__))
-    name_pattern = /([A-Za-z]+)\.template/
+    name_pattern = /([A-Za-z]+)\.([a-z]+)/
     headers = {:content_type => 'text/plain',
                'X-VERSION' => TEMPLATE_VERSION}
     curr_version = TEMPLATE_VERSION.split "."
@@ -41,7 +41,7 @@ module Medea
     Dir.glob(File.expand_path(File.join(template_dir, "*.template"))).select do |file|
       #for each template, we need to post it to ..#{filename}:html_template
       file =~ name_pattern
-      template_path = "#{base_url}..#{$1}:html_template"
+      template_path = "#{base_url}..#{$1}:#{$2}"
 
       #but,check the version first...
       begin
