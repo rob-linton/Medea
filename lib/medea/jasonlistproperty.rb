@@ -16,6 +16,10 @@ module Medea
       self.filters[:FILTER][:HTTP_X_CLASS] = list_class.name if list_type == :value
       @list_name = list_name
       @parent = parent
+      if @parent.is_a? JasonObject
+        self.filters[:FILTER][:HTTP_X_PARENT] = @parent.jason_key
+      end
+      
       @state = :prefetch
       @contents = []
       @list_type = list_type
@@ -118,23 +122,18 @@ module Medea
 
 
     def to_url
-      url = "#{JasonDB::db_auth_url}@#{@time_limit}.#{@result_format}?"
-      params = ["VERSION0"]
-      params << "FILTER=HTTP_X_LIST:#{@list_name.to_s}"
-
-      if @parent.is_a? JasonObject
-        params << "FILTER=HTTP_X_PARENT:#{@parent.jason_key}"
-      else # @parent.is_a? JasonListProperty ##(or DeferredQuery?)
+      if not @parent.is_a? JasonObject
+        # @parent.is_a? JasonListProperty ##(or DeferredQuery?)
         #we can get the insecure url here, because it will be resolved and executed at JasonDB - on a secure subnet.
 
         #puts "   = Fetching subquery stupidly. (#{@parent.to_url})"
         @parent.result_format = :keylist
         subquery = (RestClient.get @parent.to_url).strip
-        #puts "   =   Result: #{subquery}"
-        params << "FILTER={HTTP_X_PARENT:#{subquery}}"
+
+        self.filters[:FILTER][:HTTP_X_PARENT] = subquery.split ","
       end
 
-      url << URI.escape(params.join("&"), Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
+      super
     end
   end
 end

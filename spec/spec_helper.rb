@@ -6,6 +6,10 @@ require 'medea'
 class Message < Medea::JasonObject
 end
 
+ENV["jason_user"] = "michael"
+ENV["jason_topic"] = "medea-test"
+ENV["jason_password"] = "password"
+
 class User < Medea::JasonObject
   has_location
   has_many :followees, User
@@ -21,7 +25,3 @@ class DummyResponse
      :timestamp => "12345678"}
   end
 end
-
-ENV["jason_user"] = "michael"
-ENV["jason_topic"] = "medea-test"
-ENV["jason_password"] = "password"

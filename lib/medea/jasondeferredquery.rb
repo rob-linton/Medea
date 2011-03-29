@@ -92,8 +92,12 @@ module Medea
             #for each k/v in the hash, we want to add an entry to filter_array
             val.each do |field ,value|
               if value.is_a? Array
-                value.each do |i|
-                  filter_array << URI.escape("#{name.to_s}=#{field}:#{i}", unsafe)
+                if field == :HTTP_X_PARENT
+                  filter_array << URI.escape("#{name.to_s}={#{field}:[#{value.join ","}]}", unsafe)
+                else
+                  value.each do |i|
+                    filter_array << URI.escape("#{name.to_s}=#{field}:#{i}", unsafe)
+                  end
                 end
               else
                 filter_array << URI.escape("#{name.to_s}=#{field.to_s}:#{value.to_s}", unsafe)
@@ -144,11 +148,10 @@ module Medea
     def execute_query content=true
       #hit the URL
       #fill self.contents with :ghost versions of JasonObjects
-      
-      begin
-        response = RestClient.get to_url
+      self.contents = []
+      response = RestClient.get to_url
+      if response.code == 200 #OK
         result = JSON.parse(response)
-        self.contents = []
         #results are in a hash, their keys are just numbers
         result.keys.each do |k|
           if k =~ /^[0-9]+$/
@@ -167,15 +170,14 @@ module Medea
             self.contents << item
           end
         end
-
         self.state = :postfetch
-      rescue JSON::ParserError
-        #we assume that a parser error means that there are no results, or a problem with the template
-        #(currently a problem with the template is causing a parser error when there's no results)
-        self.contents = []
+        self.contents
+      elsif response.code == 204 #No Content
         self.state = :postfetch
+        self.contents
+      else #response wasn't OK or empty!
+        self.state = :prefetch
       end
-      result
     end
   end
 end

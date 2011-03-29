@@ -38,8 +38,8 @@ module Medea
                'X-VERSION' => TEMPLATE_VERSION}
     curr_version = TEMPLATE_VERSION.split "."
     base_url = url ? url : JasonDB::db_auth_url
-    Dir.glob(File.expand_path(File.join(template_dir, "*.template"))).select do |file|
-      #for each template, we need to post it to ..#{filename}:html_template
+    Dir.glob(File.expand_path(File.join(template_dir, "*.*"))).select do |file|
+      #for each template, we need to post it to ..#{filenam e}:html_template
       file =~ name_pattern
       template_path = "#{base_url}..#{$1}:#{$2}"
 
